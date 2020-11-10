@@ -46,7 +46,7 @@ The component will create an entity called `presence_simulation.running`. This e
 Three services are available:
 ## Start the simulation
 The service `presence_simulation.start` will start the simulation and set the `presence_simulation.running` entity to `on`.
-## Stop the silulation
+## Stop the simulation
 The service `presence_simulation.stop` will stop the simulation and set the `presence_simulation.running` entity to `false`.
-## Toggle the siluation
+## Toggle the simulation
 The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `presence_simulation.running` entity.
