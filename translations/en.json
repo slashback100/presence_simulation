@@ -1,11 +1,11 @@
 {
-    "title": "Simulation de présence",
+    "title": "Presence Simulation",
     "config": {
         "step": {
 		"user":{
 			"description": "Configuration",
 			"data": {
-				"entities": "Entitée ou groupe d'entités",
+				"entities": "Entities or group of entities",
 				"delta": "Delta"
 			}
 		}
