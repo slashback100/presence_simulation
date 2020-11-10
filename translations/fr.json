@@ -6,7 +6,7 @@
 			"description": "Configuration",
 			"data": {
 				"entities": "Entitée ou groupe d'entitées",
-				"delta": "Delta"
+				"delta": "Delta (nombre de jours)"
 			}
 		}
 	}
