@@ -39,11 +39,11 @@ You can also configure the component in the UI.
 
 # Use it
 
-The component will create an entity called `presence_simulation.running`. This entity will be set to true when the entity is running. False otherwise.
+The component will create an entity called `presence_simulation.running`. This entity will be set to `on` when the entity is running. `false` otherwise.
 Three services are available:
 ## Start the simulation
-The service `presence_simulation.start` will start the simulation and set the `presence_simulation.running` entity to true.
+The service `presence_simulation.start` will start the simulation and set the `presence_simulation.running` entity to `on`.
 ## Stop the silulation
-The service `presence_simulation.stop` will stop the simulation and set the `presence_simulation.running` entity to false.
+The service `presence_simulation.stop` will stop the simulation and set the `presence_simulation.running` entity to `false`.
 ## Toggle the siluation
 The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `presence_simulation.running` entity.
