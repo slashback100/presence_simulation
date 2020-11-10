@@ -1,0 +1,11 @@
+{
+  "domain": "presence_simulation",
+  "name": "Presence Simulation",
+  "documentation": "",
+  "issue_tracker": "",
+  "dependencies": ["history"],
+  "config_flow": true,
+  "codeowners": [
+    "@slashback"
+  ]
+}

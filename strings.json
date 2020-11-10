@@ -1,0 +1,14 @@
+{
+    "title": "Simulation de présence",
+    "config": {
+        "step": {
+		"user":{
+			"description": "Configuration",
+			"data": {
+				"entities": "Groupe d'entités",
+				"delta": "Delta"
+			}
+		}
+	}
+    }
+}
