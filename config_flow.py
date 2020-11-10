@@ -1,9 +1,11 @@
 from homeassistant import config_entries
+import logging
 import voluptuous as vol
 
 DOMAIN="presence_simulation"
+_LOGGER = logging.getLogger(__name__)
 
-class ExampleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Example config flow."""
     VERSION = 1
     data = None
@@ -22,9 +24,11 @@ class ExampleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         self.data = info
         try:
+            _LOGGER.debug("info.entities %s",info['entities'])
             #check if entity exist
-            hass.states.get(info['entities'])
-        except:
+            #hass.states.get(info['entities'])
+        except Exception as e:
+            _LOGGER.debug("Exception %s", e)
             return self.async_show_form(
                 step_id="user", data_schema=vol.Schema(data_schema)
             )
