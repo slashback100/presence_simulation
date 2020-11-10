@@ -5,7 +5,7 @@
 		"user":{
 			"description": "Configuration",
 			"data": {
-				"entities": "Groupe d'entités",
+				"entities": "Entitée ou groupe d'entitées",
 				"delta": "Delta"
 			}
 		}
