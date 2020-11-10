@@ -12,14 +12,22 @@ class ExampleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_finish_flow(flow, result):
             """Finish flow."""
     async def async_step_user(self, info=None):
+        data_schema = {
+            vol.Required("entities"): str,
+            vol.Required("delta"): str,
+        }
         if not info:
-            data_schema = {
-                vol.Required("entities"): str,
-                vol.Required("delta"): str,
-            }
             return self.async_show_form(
                 step_id="user", data_schema=vol.Schema(data_schema)
             )
         self.data = info
-        return self.async_create_entry(title="Simulation Presence", data=self.data)
+        try:
+            #check if entity exist
+            hass.states.get(info['entities'])
+        except:
+            return self.async_show_form(
+                step_id="user", data_schema=vol.Schema(data_schema)
+            )
+        else:
+            return self.async_create_entry(title="Simulation Presence", data=self.data)
 
