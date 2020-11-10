@@ -33,7 +33,10 @@ You can also configure the component in the UI.
 * In the UI, go in Configuration > Integration
 * Click on the '+' button
 * Search for "Presence Simulation"
-* Confirm
+* Confirm:
+
+![Configuration Window](https://github.com/slashback100/presence_simulation/blob/main/images/configFlow.jpg)
+
 * Set the group of entity to be used in the simulation
 * Set the number of days of historic the simulation will use (the delta)
 
