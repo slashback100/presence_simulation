@@ -1,6 +1,5 @@
 # Presence Simulation
-This Home Assistant component aim to provide a presence simulation in your home while you are away. It will turn on & off lights based on your historic
-
+This Home Assistant component aim to provide a presence simulation in your home while you are away. It will turn on & off lights based on your historic.
 
 # How it works
 It will look in the DB for the states historic of all the entities configured in the component for a period corresponding the a `delta` variable defined in the component. 
@@ -42,11 +41,11 @@ You can also configure the component in the UI.
 
 # Use it
 
-The component will create an entity called `presence_simulation.running`. This entity will be set to `on` when the entity is running. `false` otherwise.
+The component will create an entity called `presence_simulation.running`. This entity will be set to `on` when the entity is running. `off` otherwise.
 Three services are available:
 ## Start the simulation
 The service `presence_simulation.start` will start the simulation and set the `presence_simulation.running` entity to `on`.
-## Stop the silulation
-The service `presence_simulation.stop` will stop the simulation and set the `presence_simulation.running` entity to `false`.
-## Toggle the siluation
+## Stop the simulation
+The service `presence_simulation.stop` will stop the simulation and set the `presence_simulation.running` entity to `off`.
+## Toggle the simulation
 The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `presence_simulation.running` entity.
