@@ -133,8 +133,8 @@ async def async_mysetup(hass, entities, deltaStr):
     return True
 
 async def update_listener(hass, entry):
-    _LOGGER.debug("Updating listener");
     """Update listener."""
+    _LOGGER.debug("Updating listener");
     # The OptionsFlow saves data to options.
     # Move them back to data and clean options (dirty, but not sure how else to do that)
     if len(entry.options) > 0:
