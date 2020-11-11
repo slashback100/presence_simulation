@@ -39,6 +39,8 @@ You can also configure the component in the UI.
 * Set the group of entity to be used in the simulation
 * Set the number of days of historic the simulation will use (the delta)
 
+You can edit these configurations afterwards by clicking on Options in the integration screen.
+
 # Use it
 
 The component will create an entity called `presence_simulation.running`. This entity will be set to `on` when the entity is running. `off` otherwise.
