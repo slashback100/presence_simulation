@@ -20,23 +20,25 @@ async def async_setup(hass, config):
     return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"))
 
 async def async_mysetup(hass, entities, deltaStr):
-    """Set up this component."""
+    """Set up this component (YAML or UI)."""
     hass.states.async_set(DOMAIN+".running", "off")
     delta = int(deltaStr)
     _LOGGER.debug("Entities for presence simulation: %s", entities)
 
     async def stop_presence_simulation(err=None):
+        """Stop the presence simulation, raising a potential error"""
         hass.states.async_set(DOMAIN+".running", "off")
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
 
     async def handle_stop_presence_simulation(call):
-        """Handle the service call."""
+        """Stop the presence simulation"""
         _LOGGER.debug("Stopped presence simulation")
         await stop_presence_simulation()
 
     async def async_expand_entities(entities):
+        """If the entity is a group, return the list of the entities within, otherwise, return the entity"""
         entities_new = []
         for entity in entities:
             await asyncio.sleep(0)
@@ -61,7 +63,7 @@ async def async_mysetup(hass, entities, deltaStr):
         return entities_new
 
     async def handle_presence_simulation(call):
-        """Handle the service call."""
+        """Start the presence simulation"""
         _LOGGER.debug("Is alreay running ? %s", hass.states.get(DOMAIN+'.running').state)
         if is_running():
             _LOGGER.warning("Presence simulation already running")
@@ -86,6 +88,7 @@ async def async_mysetup(hass, entities, deltaStr):
         _LOGGER.debug("All async tasks launched")
 
     async def handle_toggle_presence_simulation(call):
+        """Toggle the presence simulation"""
         if is_running():
             handle_stop_presence_simulation(call)
         else:
@@ -93,6 +96,7 @@ async def async_mysetup(hass, entities, deltaStr):
 
 
     async def restart_presence_simulation():
+        """Make sure that once _delta_ days is passed, relaunch the presence simulation for another _delta_ days"""
         _LOGGER.debug("Presence simulation will be relaunched in %i days", delta)
         start_plus_delta = datetime.now(timezone.utc) + timedelta(delta)
         while is_running():
@@ -105,6 +109,7 @@ async def async_mysetup(hass, entities, deltaStr):
             await handle_presence_simulation(None)
 
     async def simulate_single_entity(entity_id, hist):
+        """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
         for state in hist: #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
@@ -123,6 +128,7 @@ async def async_mysetup(hass, entities, deltaStr):
             await hass.services.async_call("homeassistant", "turn_"+state.state, {"entity_id": entity_id}, blocking=False)
 
     def is_running():
+        """Returns true if the simulation is running"""
         return hass.states.get(DOMAIN+'.running').state == "on"
 
 
@@ -133,7 +139,7 @@ async def async_mysetup(hass, entities, deltaStr):
     return True
 
 async def update_listener(hass, entry):
-    """Update listener."""
+    """Update listener after an update in the UI"""
     _LOGGER.debug("Updating listener");
     # The OptionsFlow saves data to options.
     # Move them back to data and clean options (dirty, but not sure how else to do that)
