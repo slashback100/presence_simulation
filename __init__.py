@@ -5,13 +5,14 @@ import time
 import asyncio
 from datetime import datetime,timedelta,timezone
 from homeassistant.components import history
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-DOMAIN = "presence_simulation"
 
 async def async_setup_entry(hass, entry):
     """Set up this component using config flow."""
     _LOGGER.debug("async setup entry %s", entry.data["entities"])
+    unsub = entry.add_update_listener(update_listener)
     return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"])
 
 async def async_setup(hass, config):
@@ -58,7 +59,7 @@ async def async_mysetup(hass, entities, deltaStr):
                 else:
                     entities_new.append(entity)
         return entities_new
-    
+
     async def handle_presence_simulation(call):
         """Handle the service call."""
         _LOGGER.debug("Is alreay running ? %s", hass.states.get(DOMAIN+'.running').state)
@@ -83,7 +84,7 @@ async def async_mysetup(hass, entities, deltaStr):
 
         hass.async_create_task(restart_presence_simulation())
         _LOGGER.debug("All async tasks launched")
-    
+
     async def handle_toggle_presence_simulation(call):
         if is_running():
             handle_stop_presence_simulation(call)
@@ -95,11 +96,11 @@ async def async_mysetup(hass, entities, deltaStr):
         _LOGGER.debug("Presence simulation will be relaunched in %i days", delta)
         start_plus_delta = datetime.now(timezone.utc) + timedelta(delta)
         while is_running():
-            await asyncio.sleep(60) 
-            now = datetime.now(timezone.utc) 
+            await asyncio.sleep(60)
+            now = datetime.now(timezone.utc)
             if now > start_plus_delta:
                 break
-        
+
         if is_running():
             await handle_presence_simulation(None)
 
@@ -131,3 +132,12 @@ async def async_mysetup(hass, entities, deltaStr):
 
     return True
 
+async def update_listener(hass, entry):
+    _LOGGER.debug("Updating listener");
+    """Update listener."""
+    # The OptionsFlow saves data to options.
+    # Move them back to data and clean options (dirty, but not sure how else to do that)
+    if len(entry.options) > 0:
+        entry.data = entry.options
+        entry.options = {}
+        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"])

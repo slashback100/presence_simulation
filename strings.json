@@ -10,5 +10,16 @@
 			}
 		}
 	}
+    },
+    "options": {
+        "step": {
+		"init":{
+			"description": "Configuration",
+			"data": {
+				"entities": "Entity or group of entities",
+				"delta": "Delta (in days)"
+			}
+		}
+	}
     }
 }

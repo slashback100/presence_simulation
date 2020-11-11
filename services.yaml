@@ -1,2 +1,6 @@
-presence_simulation:
-  description: Simulate presence
+start:
+  description: Start the presence simulation
+stop:
+  description: Stop the presence simulation
+toggle:
+  description: Toggle the presence simulation
