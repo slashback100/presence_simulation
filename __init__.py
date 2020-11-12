@@ -17,7 +17,12 @@ async def async_setup_entry(hass, entry):
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
-    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"))
+    try:
+        return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"))
+    except Exception as e:
+        #Apparently, when configuring from the UI, this method is also called. Jsut returning true, and the async_setup_entry will be called afterward
+        return True
+
 
 async def async_mysetup(hass, entities, deltaStr):
     """Set up this component (YAML or UI)."""
