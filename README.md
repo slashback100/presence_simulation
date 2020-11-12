@@ -6,6 +6,8 @@ It will look in the DB for the states historic of all the entities configured in
 It will apply to the entites the same state as it was `delta` days ago, in order to simulate your presence. 
 If the service is running longer than the number of days defined as the `delta`, the component will simply be reset and start over, until the stop service is called.
 
+Note: The component doens't deal (yet) with the rgb_color of brightness.
+
 # Pre-requisit
 The `historic` component should be activated, and the period kept in the DB should be bigger than the delta used in the simulation.
 
@@ -25,7 +27,7 @@ presence_simulation:
 ```
 
 * `delta` is the number of days of historic that will be used by the simulation. 7 days is the default.
-* `entity_id` contains the list of entities that will be used in the simulation. 
+* `entity_id` contains the list of entities that will be used in the simulation. It can be lights or any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`, or a group of entities of those kinds.
 
 ## UI
 You can also configure the component in the UI.
@@ -36,7 +38,7 @@ You can also configure the component in the UI.
 
 ![Configuration Window](https://github.com/slashback100/presence_simulation/blob/main/images/configFlow.jpg)
 
-* Set the group of entity to be used in the simulation
+* Set the group of entity to be used in the simulation. It can be a group of lights or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
 * Set the number of days of historic the simulation will use (the delta)
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
