@@ -44,7 +44,7 @@ async def async_mysetup(hass, entities, deltaStr):
             await asyncio.sleep(0)
             if entity[0:5] == "group":
                 try:
-                    group_entities = hass.states.get(entity).as_dict()["attributes"]["entity_id"]
+                    group_entities = hass.states.get(entity).attributes["entity_id"]
                 except Exception as e:
                     _LOGGER.error("Error when trying to identify entity %s: %s", entity, e)
                 else:
@@ -124,8 +124,29 @@ async def async_mysetup(hass, entities, deltaStr):
             if not is_running():
                 return # exit if state is false
             #call service to turn on/off the light
+            await update_entity(entity_id, state)
+
+    async def update_entity(entity_id, state):
+        domain = entity_id.split('.')[0]
+        service_data = {"entity_id": entity_id}
+        if domain == "light":
+            _LOGGER.debug("Switching light %s to %s", entity_id, state.state)
+            try:
+                if state.attributes["brightness"]:
+                    service_data["brightness"] = state.attributes["brightness"]
+            except:
+                #brightness not defined
+                pass
+            try:
+                if state.attributes["rgb_color"]:
+                    service_data["rgb_color"] = state.attributes["rgb_color"]
+            except:
+                #rgb_color not defined
+                pass
+            await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
+        else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
-            await hass.services.async_call("homeassistant", "turn_"+state.state, {"entity_id": entity_id}, blocking=False)
+            await hass.services.async_call("homeassistant", "turn_"+state.state, service_data, blocking=False)
 
     def is_running():
         """Returns true if the simulation is running"""
