@@ -27,7 +27,7 @@ You can edit these configurations afterwards by clicking on Options in the integ
 
 # Use it
 
-The component will create an entity called `sensor.resence_simulation`. This entity will be set to `on` when the entity is running. `off` otherwise.
+The component will create an entity called `sensor.presence_simulation`. This entity will be set to `on` when the entity is running. `off` otherwise.
 Three services are available:
 ## Start the simulation
 The service `presence_simulation.start` will start the simulation and set the `sensor.presence_simulation` entity to `on`.
