@@ -1,11 +1,13 @@
 from homeassistant.helpers.entity import ToggleEntity
+from datetime import datetime, timezone, timedelta
+import math
 import logging
 from .const import (
         DOMAIN,
         SENSOR_PLATFORM,
         SENSOR
 )
-
+SCAN_INTERVAL = timedelta(seconds=5)
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_platform(hass, _, async_add_entities, discovery_info=None):
@@ -23,9 +25,13 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 
 class PresenceSimulationSwitch(ToggleEntity):
     instances = 0
+
     def __init__(self, hass):
         self.turn_off()
         self.hass = hass
+        self.attr={}
+        self.attr["friendly_name"] = "Presence Simulation Toggle"
+        self._next_events = []
         PresenceSimulationSwitch.instances += 1
         pass
 
@@ -46,18 +52,27 @@ class PresenceSimulationSwitch(ToggleEntity):
 
     def turn_off(self, **kwargs):
         self._state = "off"
+        self._next_events = []
 
     async def async_update(self):
-        pass
+        if len(self._next_events) > 0:
+            self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = sorted(self._next_events)[0]
+        else:
+            for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
+                if prop in self.attr:
+                    del self.attr[prop]
 
     def update(self):
-        pass
+        if len(self._next_events) > 0:
+            self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = sorted(self._next_events)[0]
+        else:
+            for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
+                if prop in self.attr:
+                    del self.attr[prop]
 
     @property
     def device_state_attributes(self):
-        attr={}
-        attr["friendly_name"] = "Presence Simulation Toggle"
-        return attr
+        return self.attr
 
     async def async_added_to_hass(self):
         """When sensor is added to hassio."""
@@ -67,3 +82,13 @@ class PresenceSimulationSwitch(ToggleEntity):
         if SENSOR_PLATFORM not in self.hass.data[DOMAIN]:
             self.hass.data[DOMAIN][SENSOR_PLATFORM] = {}
         self.hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR] = self
+
+    async def async_add_next_event(self, next_datetime, entity_id, state):
+        self._next_events.append((next_datetime, entity_id, state))
+
+    async def async_remove_event(self, entity_id):
+        i=0
+        for e in self._next_events:
+            if e[1] == entity_id:
+                del self._next_events[i]
+            i += 1

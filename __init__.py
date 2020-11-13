@@ -17,8 +17,6 @@ async def async_setup_entry(hass, entry):
     """Set up this component using config flow."""
     _LOGGER.debug("async setup entry %s", entry.data["entities"])
     unsub = entry.add_update_listener(update_listener)
-    #if PresenceSimulationSwitch.instances == 0:
-    #    async_add_entities([PresenceSimulationSwitch(hass)], True)
 
     # Use `hass.async_create_task` to avoid a circular dependency between the platform and the component
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SENSOR_PLATFORM))
@@ -34,7 +32,6 @@ async def async_setup(hass, config):
 
 async def async_mysetup(hass, entities, deltaStr):
     """Set up this component (YAML or UI)."""
-    #hass.states.async_set(DOMAIN+".running", "off") # replaced by the sensor
     delta = int(deltaStr)
     _LOGGER.debug("Entities for presence simulation: %s", entities)
 
@@ -42,7 +39,6 @@ async def async_mysetup(hass, entities, deltaStr):
         """Stop the presence simulation, raising a potential error"""
         entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
         entity.turn_off()
-        #hass.states.async_set(DOMAIN+".running", "off")
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
@@ -63,7 +59,6 @@ async def async_mysetup(hass, entities, deltaStr):
                 except Exception as e:
                     _LOGGER.error("Error when trying to identify entity %s: %s", entity, e)
                 else:
-                    #await stop_presence_simulation(e)
                     group_entities_expanded = await async_expand_entities(group_entities)
                     _LOGGER.debug("State %s", group_entities_expanded)
                     for tmp in group_entities_expanded:
@@ -86,7 +81,6 @@ async def async_mysetup(hass, entities, deltaStr):
             return
         running = True
         entity.turn_on()
-        #hass.states.async_set(DOMAIN+".running", "on")
         _LOGGER.debug("Started presence simulation")
 
         current_date = datetime.now(timezone.utc)
@@ -98,8 +92,7 @@ async def async_mysetup(hass, entities, deltaStr):
         for entity_id in dic:
             _LOGGER.debug('Entity %s', entity_id)
             #launch a thread by entity_id
-            #put the tasks in a tab to be able to kill them when the service stops
-            hass.async_create_task(simulate_single_entity(entity_id, dic[entity_id])) #coroutine
+            hass.async_create_task(simulate_single_entity(entity_id, dic[entity_id]))
 
         hass.async_create_task(restart_presence_simulation())
         _LOGGER.debug("All async tasks launched")
@@ -131,35 +124,29 @@ async def async_mysetup(hass, entities, deltaStr):
         for state in hist: #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_changed+timedelta(delta))
+            entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
+            await entity.async_add_next_event(state.last_changed+timedelta(delta), entity_id, state.state)
+
             while is_running():
                 minus_delta = datetime.now(timezone.utc) + timedelta(-delta)
-                #_LOGGER.debug("%s <= %s", state.last_changed, minus_delta)
                 if state.last_changed <= minus_delta:
                     break
-                #_LOGGER.debug("%s: will retry in 30 sec", entity_id)
                 await asyncio.sleep(30)
             if not is_running():
                 return # exit if state is false
             #call service to turn on/off the light
             await update_entity(entity_id, state)
+            await entity.async_remove_event(entity_id)
 
     async def update_entity(entity_id, state):
         domain = entity_id.split('.')[0]
         service_data = {"entity_id": entity_id}
         if domain == "light":
             _LOGGER.debug("Switching light %s to %s", entity_id, state.state)
-            try:
-                if state.attributes["brightness"]:
+            if "brightness" in state.attributes:
                     service_data["brightness"] = state.attributes["brightness"]
-            except:
-                #brightness not defined
-                pass
-            try:
-                if state.attributes["rgb_color"]:
+            if "rgb_color" in state.attributes:
                     service_data["rgb_color"] = state.attributes["rgb_color"]
-            except:
-                #rgb_color not defined
-                pass
             await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
@@ -167,7 +154,6 @@ async def async_mysetup(hass, entities, deltaStr):
 
     def is_running():
         """Returns true if the simulation is running"""
-        #return hass.states.get(DOMAIN+'.running').state == "on"
         entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
         return entity.is_on
 
@@ -182,7 +168,6 @@ async def update_listener(hass, entry):
     """Update listener after an update in the UI"""
     _LOGGER.debug("Updating listener");
     # The OptionsFlow saves data to options.
-    # Move them back to data and clean options (dirty, but not sure how else to do that)
     if len(entry.options) > 0:
         entry.data = entry.options
         entry.options = {}
