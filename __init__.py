@@ -5,34 +5,44 @@ import time
 import asyncio
 from datetime import datetime,timedelta,timezone
 from homeassistant.components import history
-from .const import DOMAIN
-
+from .sensor import PresenceSimulationSwitch
+from .const import (
+        DOMAIN,
+        SENSOR_PLATFORM,
+        SENSOR
+)
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry):
     """Set up this component using config flow."""
     _LOGGER.debug("async setup entry %s", entry.data["entities"])
     unsub = entry.add_update_listener(update_listener)
+    #if PresenceSimulationSwitch.instances == 0:
+    #    async_add_entities([PresenceSimulationSwitch(hass)], True)
+
+    # Use `hass.async_create_task` to avoid a circular dependency between the platform and the component
+    hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SENSOR_PLATFORM))
     return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"])
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
-    try:
-        return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"))
-    except Exception as e:
-        #Apparently, when configuring from the UI, this method is also called. Jsut returning true, and the async_setup_entry will be called afterward
+    if config.get(DOMAIN) is None:
+        # We get here if the integration is set up using config flow
         return True
+    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"))
 
 
 async def async_mysetup(hass, entities, deltaStr):
     """Set up this component (YAML or UI)."""
-    hass.states.async_set(DOMAIN+".running", "off")
+    #hass.states.async_set(DOMAIN+".running", "off") # replaced by the sensor
     delta = int(deltaStr)
     _LOGGER.debug("Entities for presence simulation: %s", entities)
 
     async def stop_presence_simulation(err=None):
         """Stop the presence simulation, raising a potential error"""
-        hass.states.async_set(DOMAIN+".running", "off")
+        entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
+        entity.turn_off()
+        #hass.states.async_set(DOMAIN+".running", "off")
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
@@ -69,12 +79,14 @@ async def async_mysetup(hass, entities, deltaStr):
 
     async def handle_presence_simulation(call):
         """Start the presence simulation"""
-        _LOGGER.debug("Is alreay running ? %s", hass.states.get(DOMAIN+'.running').state)
+        entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
+        _LOGGER.debug("Is already running ? %s", entity.state)
         if is_running():
             _LOGGER.warning("Presence simulation already running")
             return
         running = True
-        hass.states.async_set(DOMAIN+".running", "on")
+        entity.turn_on()
+        #hass.states.async_set(DOMAIN+".running", "on")
         _LOGGER.debug("Started presence simulation")
 
         current_date = datetime.now(timezone.utc)
@@ -155,7 +167,9 @@ async def async_mysetup(hass, entities, deltaStr):
 
     def is_running():
         """Returns true if the simulation is running"""
-        return hass.states.get(DOMAIN+'.running').state == "on"
+        #return hass.states.get(DOMAIN+'.running').state == "on"
+        entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
+        return entity.is_on
 
 
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)

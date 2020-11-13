@@ -13,22 +13,6 @@ The `historic` component should be activated, and the period kept in the DB shou
 In your Home Assistant configuration directory (`~/.homeassistant`), create a directory `custom_components/presence_simulation` and put the code in it.
 
 # Configuration
-## YAML
-You can configure it through your `configuration.yaml` file:
-```
-presence_simulation:
-    delta: 7
-    entity_id:
-      - light.hall
-      - light.living_room
-      - group.outside_lights
-```
-
-* `delta` is the number of days of historic that will be used by the simulation. 7 days is the default.
-* `entity_id` contains the list of entities that will be used in the simulation. It can be lights, switches or any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`, or a group of entities of those kinds.
-
-## UI
-You can also configure the component in the UI.
 * In the UI, go in Configuration > Integration
 * Click on the '+' button
 * Search for "Presence Simulation"
@@ -43,11 +27,11 @@ You can edit these configurations afterwards by clicking on Options in the integ
 
 # Use it
 
-The component will create an entity called `presence_simulation.running`. This entity will be set to `on` when the entity is running. `off` otherwise.
+The component will create an entity called `sensor.resence_simulation`. This entity will be set to `on` when the entity is running. `off` otherwise.
 Three services are available:
 ## Start the simulation
-The service `presence_simulation.start` will start the simulation and set the `presence_simulation.running` entity to `on`.
+The service `presence_simulation.start` will start the simulation and set the `sensor.presence_simulation` entity to `on`.
 ## Stop the simulation
-The service `presence_simulation.stop` will stop the simulation and set the `presence_simulation.running` entity to `off`.
+The service `presence_simulation.stop` will stop the simulation and set the `sensor.presence_simulation` entity to `off`.
 ## Toggle the simulation
-The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `presence_simulation.running` entity.
+The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `sensor.presence_simulation` entity.
