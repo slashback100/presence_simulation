@@ -95,7 +95,7 @@ async def async_mysetup(hass, entities, deltaStr):
     async def handle_toggle_presence_simulation(call):
         """Toggle the presence simulation"""
         if is_running():
-            handle_stop_presence_simulation(call)
+            await handle_stop_presence_simulation(call)
         else:
             await handle_presence_simulation(call)
 

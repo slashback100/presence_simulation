@@ -1,5 +1,5 @@
 # Presence Simulation
-This Home Assistant component aim to provide a presence simulation in your home while you are away. It will turn on & off lights based on your historic.
+This Home Assistant component aim to provide a presence simulation in your home while you are away. It will turn on & off lights, switches, ... based on your historic.
 
 # How it works
 It will look in the DB for the states historic of all the entities configured in the component for a period corresponding the a `delta` variable defined in the component.
@@ -25,7 +25,7 @@ presence_simulation:
 ```
 
 * `delta` is the number of days of historic that will be used by the simulation. 7 days is the default.
-* `entity_id` contains the list of entities that will be used in the simulation. It can be lights or any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`, or a group of entities of those kinds.
+* `entity_id` contains the list of entities that will be used in the simulation. It can be lights, switches or any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`, or a group of entities of those kinds.
 
 ## UI
 You can also configure the component in the UI.
@@ -36,7 +36,7 @@ You can also configure the component in the UI.
 
 ![Configuration Window](https://github.com/slashback100/presence_simulation/blob/main/images/configFlow.jpg)
 
-* Set the group of entity to be used in the simulation. It can be a group of lights or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
+* Set the group of entity to be used in the simulation. It can be a group of lights, switches or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
 * Set the number of days of historic the simulation will use (the delta)
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
