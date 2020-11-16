@@ -16,7 +16,8 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, info=None):
         data_schema = {
             vol.Required("entities"): str,
-            vol.Required("delta"): str,
+            vol.Required("delta", default=7): str,
+            vol.Required("interval", default=30): str,
         }
         if not info:
             return self.async_show_form(
@@ -47,9 +48,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(self, info=None):
         """Manage the options."""
         if not info:
+            if "interval" in self.config_entry.data:
+                interval = self.config_entry.data["interval"]
+            else:
+                interval = 30
             data_schema = {
                 vol.Required("entities", default=self.config_entry.data["entities"]): str,
                 vol.Required("delta", default=self.config_entry.data["delta"]): str,
+                vol.Required("interval", default=interval): str,
             }
             return self.async_show_form(
                 step_id="init", data_schema=vol.Schema(data_schema)

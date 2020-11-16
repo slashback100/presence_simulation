@@ -19,33 +19,44 @@ async def async_setup_entry(hass, entry):
 
     # Use `hass.async_create_task` to avoid a circular dependency between the platform and the component
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SWITCH_PLATFORM))
-    return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"])
+    if 'interval' in entry.data:
+        interval = entry.data['interval']
+    else:
+        interval = 30
+    return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], interval)
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
     if config.get(DOMAIN) is None:
         # We get here if the integration is set up using config flow
         return True
-    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"))
+    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"), config[DOMAIN].get('interval', '30'))
 
 
-async def async_mysetup(hass, entities, deltaStr):
+async def async_mysetup(hass, entities, deltaStr, refreshInterval):
     """Set up this component (YAML or UI)."""
-    delta = int(deltaStr)
-    _LOGGER.debug("Entities for presence simulation: %s", entities)
+    #delta = int(deltaStr)
+    delta = 1/24/4 #15m, for test purpose
+    interval = int(refreshInterval)
+    _LOGGER.debug("Config: Entities for presence simulation: %s", entities)
+    _LOGGER.debug("Config: Cycle of %s days", delta)
+    _LOGGER.debug("Config: Scan interval of %s seconds", interval)
+    _LOGGER.debug("Config: Timezone that will be used to display datetime: %s", hass.config.time_zone)
 
-    async def stop_presence_simulation(err=None):
+    async def stop_presence_simulation(err=None, restart=False):
         """Stop the presence simulation, raising a potential error"""
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
         entity.internal_turn_off()
+        if not restart:
+            await entity.reset_start_datetime()
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
 
-    async def handle_stop_presence_simulation(call):
+    async def handle_stop_presence_simulation(call, restart=False):
         """Stop the presence simulation"""
         _LOGGER.debug("Stopped presence simulation")
-        await stop_presence_simulation()
+        await stop_presence_simulation(restart=restart)
 
     async def async_expand_entities(entities):
         """If the entity is a group, return the list of the entities within, otherwise, return the entity"""
@@ -71,20 +82,29 @@ async def async_mysetup(hass, entities, deltaStr):
                     entities_new.append(entity)
         return entities_new
 
-    async def handle_presence_simulation(call):
+    async def handle_presence_simulation(call, restart=False):
         """Start the presence simulation"""
+        if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
+            overridden_entities = call.data.get("entity_id", entities)
+        elif not restart: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
+            overridden_entities = entities
+        #else, should not happen
+
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
         _LOGGER.debug("Is already running ? %s", entity.state)
         if is_running():
-            _LOGGER.warning("Presence simulation already running")
+            _LOGGER.warning("Presence simulation already running. Doing nothing")
             return
         running = True
         entity.internal_turn_on()
-        _LOGGER.debug("Started presence simulation")
+        _LOGGER.debug("Presence simulation started")
 
         current_date = datetime.now(timezone.utc)
+        if not restart:
+            #set attribute on the switch
+            await entity.set_start_datetime(datetime.now(hass.config.time_zone))
         minus_delta = current_date + timedelta(-delta)
-        expanded_entities = await async_expand_entities(entities)
+        expanded_entities = await async_expand_entities(overridden_entities)
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
         dic = history.get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities)
         _LOGGER.debug("history: %s", dic)
@@ -93,18 +113,18 @@ async def async_mysetup(hass, entities, deltaStr):
             #launch a thread by entity_id
             hass.async_create_task(simulate_single_entity(entity_id, dic[entity_id]))
 
-        hass.async_create_task(restart_presence_simulation())
+        hass.async_create_task(restart_presence_simulation(call))
         _LOGGER.debug("All async tasks launched")
 
     async def handle_toggle_presence_simulation(call):
         """Toggle the presence simulation"""
         if is_running():
-            await handle_stop_presence_simulation(call)
+            await handle_stop_presence_simulation(call, restart=False)
         else:
-            await handle_presence_simulation(call)
+            await handle_presence_simulation(call, restart=False)
 
 
-    async def restart_presence_simulation():
+    async def restart_presence_simulation(call):
         """Make sure that once _delta_ days is passed, relaunch the presence simulation for another _delta_ days"""
         _LOGGER.debug("Presence simulation will be relaunched in %i days", delta)
         start_plus_delta = datetime.now(timezone.utc) + timedelta(delta)
@@ -115,22 +135,27 @@ async def async_mysetup(hass, entities, deltaStr):
                 break
 
         if is_running():
-            await handle_presence_simulation(None)
+            _LOGGER.debug("%s has passed, presence simulation is relaunched", delta)
+            #Call top stop needed to avoid the start to do nothing since already running
+            await handle_stop_presence_simulation(None, restart=True)
+            await handle_presence_simulation(call, restart=True)
 
     async def simulate_single_entity(entity_id, hist):
         """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
         for state in hist: #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
+            #_LOGGER.debug("Switch of %s foreseen at %s", entity_id, (state.last_changed+timedelta(delta)).replace(tzinfo=hass.config.time_zone))
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_changed+timedelta(delta))
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
+            #await entity.async_add_next_event((state.last_changed+timedelta(delta)).replace(tzinfo=hass.config.time_zone), entity_id, state.state)
             await entity.async_add_next_event(state.last_changed+timedelta(delta), entity_id, state.state)
 
             while is_running():
                 minus_delta = datetime.now(timezone.utc) + timedelta(-delta)
                 if state.last_changed <= minus_delta:
                     break
-                await asyncio.sleep(30)
+                await asyncio.sleep(interval)
             if not is_running():
                 return # exit if state is false
             #call service to turn on/off the light
@@ -170,4 +195,4 @@ async def update_listener(hass, entry):
     if len(entry.options) > 0:
         entry.data = entry.options
         entry.options = {}
-        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"])
+        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], entry.data["interval"])

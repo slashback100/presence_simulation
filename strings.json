@@ -6,7 +6,8 @@
 			"description": "Configuration",
 			"data": {
 				"entities": "Entity or group of entities",
-				"delta": "Delta (in days)"
+				"delta": "Delta (in days)",
+				"interval": "Refresh interval (in seconds)"
 			}
 		}
 	}
@@ -17,7 +18,8 @@
 			"description": "Configuration",
 			"data": {
 				"entities": "Entity or group of entities",
-				"delta": "Delta (in days)"
+				"delta": "Delta (in days)",
+				"interval": "Refresh interval (in seconds)"
 			}
 		}
 	}

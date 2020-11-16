@@ -6,7 +6,20 @@
 			"description": "Configuration",
 			"data": {
 				"entities": "Entitée ou groupe d'entitées",
-				"delta": "Delta (nombre de jours)"
+				"delta": "Delta (nombre de jours)",
+				"interval": "Intervalle de mise à jour (en secondes)"
+			}
+		}
+	}
+    },
+    "options": {
+        "step": {
+		"user":{
+			"description": "Configuration",
+			"data": {
+				"entities": "Entitée ou groupe d'entitées",
+				"delta": "Delta (nombre de jours)",
+				"interval": "Intervalle de mise à jour (en secondes)"
 			}
 		}
 	}
