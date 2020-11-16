@@ -18,7 +18,7 @@ In your Home Assistant configuration directory (`~/.homeassistant`), create a di
 * Search for "Presence Simulation"
 * Confirm:
 
-![Configuration Window](https://github.com/slashback100/presence_simulation/blob/main/images/configFlow.png)
+![Configuration Window](https://github.com/slashback100/presence_simulation/blob/main/images/configFlow..png)
 
 * Set the group of entity to be used in the simulation. It can be a group of lights, switches or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
 * Set the number of days of historic the simulation will use (the delta)
