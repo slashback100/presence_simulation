@@ -1,5 +1,10 @@
 start:
   description: Start the presence simulation
+  fields:
+    entity_id:
+      description: The list of entities to use by the presence simulation to override the list configured in the component
+      example: >
+            - group.outside_lights
 stop:
   description: Stop the presence simulation
 toggle:
