@@ -40,7 +40,7 @@ The service `presence_simulation.start` will start the simulation and set the `s
 Optionally, you can reference a list of entities if you wan't to overridde the component configuration:
 ```
 entity_id:
-  - light.outside_lights
+  - group.outside_lights
   - light.living_room
   - light.hall
 ```
