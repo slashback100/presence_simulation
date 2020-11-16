@@ -14,7 +14,7 @@
     },
     "options": {
         "step": {
-		"user":{
+		"init":{
 			"description": "Configuration",
 			"data": {
 				"entities": "Entitée ou groupe d'entitées",
