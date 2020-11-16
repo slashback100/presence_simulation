@@ -1,3 +1,3 @@
 DOMAIN = "presence_simulation"
-SENSOR_PLATFORM = "sensor"
-SENSOR = "presence_simulation"
+SWITCH_PLATFORM = "switch"
+SWITCH = "presence_simulation"

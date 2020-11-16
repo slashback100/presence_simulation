@@ -5,11 +5,10 @@ import time
 import asyncio
 from datetime import datetime,timedelta,timezone
 from homeassistant.components import history
-from .sensor import PresenceSimulationSwitch
 from .const import (
         DOMAIN,
-        SENSOR_PLATFORM,
-        SENSOR
+        SWITCH_PLATFORM,
+        SWITCH
 )
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ async def async_setup_entry(hass, entry):
     unsub = entry.add_update_listener(update_listener)
 
     # Use `hass.async_create_task` to avoid a circular dependency between the platform and the component
-    hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SENSOR_PLATFORM))
+    hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SWITCH_PLATFORM))
     return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"])
 
 async def async_setup(hass, config):
@@ -37,8 +36,8 @@ async def async_mysetup(hass, entities, deltaStr):
 
     async def stop_presence_simulation(err=None):
         """Stop the presence simulation, raising a potential error"""
-        entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
-        entity.turn_off()
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
+        entity.internal_turn_off()
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
@@ -74,13 +73,13 @@ async def async_mysetup(hass, entities, deltaStr):
 
     async def handle_presence_simulation(call):
         """Start the presence simulation"""
-        entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
         _LOGGER.debug("Is already running ? %s", entity.state)
         if is_running():
             _LOGGER.warning("Presence simulation already running")
             return
         running = True
-        entity.turn_on()
+        entity.internal_turn_on()
         _LOGGER.debug("Started presence simulation")
 
         current_date = datetime.now(timezone.utc)
@@ -124,7 +123,7 @@ async def async_mysetup(hass, entities, deltaStr):
         for state in hist: #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_changed+timedelta(delta))
-            entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
             await entity.async_add_next_event(state.last_changed+timedelta(delta), entity_id, state.state)
 
             while is_running():
@@ -154,7 +153,7 @@ async def async_mysetup(hass, entities, deltaStr):
 
     def is_running():
         """Returns true if the simulation is running"""
-        entity = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
         return entity.is_on
 
 

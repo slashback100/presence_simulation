@@ -27,11 +27,16 @@ You can edit these configurations afterwards by clicking on Options in the integ
 
 # Use it
 
-The component will create an entity called `sensor.presence_simulation`. This entity will be set to `on` when the entity is running. `off` otherwise.
+The component will create an entity called `switch.presence_simulation`. This entity will be set to `on` when the entity is running. `off` otherwise.
+You have 2 ways of launching the simulation:
+## With the switch
+Toggling the `switch.presence_simulation` will toggle the presence simulation.
+
+## With the services
 Three services are available:
-## Start the simulation
-The service `presence_simulation.start` will start the simulation and set the `sensor.presence_simulation` entity to `on`.
-## Stop the simulation
-The service `presence_simulation.stop` will stop the simulation and set the `sensor.presence_simulation` entity to `off`.
-## Toggle the simulation
-The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `sensor.presence_simulation` entity.
+### Start the simulation
+The service `presence_simulation.start` will start the simulation and set the `switch.presence_simulation` entity to `on`.
+### Stop the simulation
+The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
+### Toggle the simulation
+The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `switch.presence_simulation` entity.
