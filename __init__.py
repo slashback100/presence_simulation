@@ -35,8 +35,7 @@ async def async_setup(hass, config):
 
 async def async_mysetup(hass, entities, deltaStr, refreshInterval):
     """Set up this component (YAML or UI)."""
-    #delta = int(deltaStr)
-    delta = 1/24/4 #15m, for test purpose
+    delta = int(deltaStr)
     interval = int(refreshInterval)
     _LOGGER.debug("Config: Entities for presence simulation: %s", entities)
     _LOGGER.debug("Config: Cycle of %s days", delta)
