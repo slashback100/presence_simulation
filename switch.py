@@ -34,7 +34,6 @@ class PresenceSimulationSwitch(SwitchEntity):
         self.attr["friendly_name"] = "Presence Simulation Toggle"
         self._next_events = []
         PresenceSimulationSwitch.instances += 1
-        pass
 
     @property
     def name(self):
