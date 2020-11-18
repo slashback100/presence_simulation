@@ -118,4 +118,12 @@ class PresenceSimulationSwitch(SwitchEntity):
         self.attr["simulation_start"] = start_datetime
 
     async def reset_start_datetime(self):
-        del self.attr["simulation_start"]
+        if "simulation_start" in self.attr:
+            del self.attr["simulation_start"]
+
+    async def set_entities(self, entities):
+        self.attr["entity_id"] = entities
+
+    async def reset_entities(self):
+        if "entity_id" in self.attr:
+            del self.attr["entity_id"]

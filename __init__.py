@@ -54,6 +54,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
         if not restart:
             #empty the start_datetime  attribute
             await entity.reset_start_datetime()
+            await entity.reset_entities()
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
@@ -120,6 +121,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
         minus_delta = current_date + timedelta(-delta)
         #expand the entitiies, meaning replace the groups with the entities in it
         expanded_entities = await async_expand_entities(overridden_entities)
+        await entity.set_entities(expanded_entities)
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
         #dic = history.get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities)
         dic = history.get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, significant_changes_only=False)
