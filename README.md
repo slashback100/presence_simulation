@@ -10,8 +10,13 @@ If the service is running longer than the number of days defined as the `delta`,
 The `historic` component should be activated, and the period kept in the DB should be bigger than the delta used in the simulation.
 
 # Installation
-In your Home Assistant configuration directory (`~/.homeassistant`), create a directory `custom_components/presence_simulation` and put the code in it.
-
+## Option 1
+- In your Home Assistant configuration directory (`~/.homeassistant`), create a directory `custom_components/presence_simulation` and put the code in it.
+- Restart Home Assistant
+## Option 2
+- In your Home Assistant configuration directory (`~/.homeassistant`), create a directory `custom_components` if not already existing and navigate in it.
+- `git clone https://github.com/slashback100/presence_simulation.git`
+- Restart Home Assistant
 # Configuration
 * In the UI, go in Configuration > Integration
 * Click on the '+' button
