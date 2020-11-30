@@ -5,6 +5,9 @@ start:
       description: The list of entities to use by the presence simulation to override the list configured in the component
       example: >
             - group.outside_lights
+    delta:
+      description: Overridde the default number of days used by the simulation
+      example: 7
 stop:
   description: Stop the presence simulation
 toggle:

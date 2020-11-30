@@ -98,8 +98,10 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
                 overridden_entities = call.data.get("entity_id", entities)
             else:
                 overridden_entities = [call.data.get("entity_id", entities)]
+            overridden_delta = call.data.get("delta", delta)
         elif not restart: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
             overridden_entities = entities
+            overridden_delta = delta
         #else, should not happen
 
         #get the switch entity
@@ -118,7 +120,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
             #set attribute on the switch
             await entity.set_start_datetime(datetime.now(hass.config.time_zone))
         #compute the start date that will be used in the query to get the historic of the entities
-        minus_delta = current_date + timedelta(-delta)
+        minus_delta = current_date + timedelta(-overridden_delta)
         #expand the entitiies, meaning replace the groups with the entities in it
         expanded_entities = await async_expand_entities(overridden_entities)
         await entity.set_entities(expanded_entities)
@@ -145,9 +147,13 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
 
     async def restart_presence_simulation(call):
         """Make sure that once _delta_ days is passed, relaunch the presence simulation for another _delta_ days"""
-        _LOGGER.debug("Presence simulation will be relaunched in %i days", delta)
+        if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
+            overridden_delta = call.data.get("delta", delta)
+        else:
+            overridden_delta = delta
+        _LOGGER.debug("Presence simulation will be relaunched in %i days", overridden_delta)
         #compute the moment the presence simulation will have to be restarted
-        start_plus_delta = datetime.now(timezone.utc) + timedelta(delta)
+        start_plus_delta = datetime.now(timezone.utc) + timedelta(overridden_delta)
         while is_running():
             #sleep until the 'delay' is passed
             await asyncio.sleep(interval)
@@ -156,9 +162,9 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
                 break
 
         if is_running():
-            _LOGGER.debug("%s has passed, presence simulation is relaunched", delta)
+            _LOGGER.debug("%s has passed, presence simulation is relaunched", overridden_delta)
             #Call top stop needed to avoid the start to do nothing since already running
-            await handle_stop_presence_simulation(None, restart=True)
+            await handle_stop_presence_simulation(call, restart=True)
             await handle_presence_simulation(call, restart=True)
 
     async def simulate_single_entity(entity_id, hist):
@@ -203,6 +209,32 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
             if "rgb_color" in state.attributes:
                 service_data["rgb_color"] = state.attributes["rgb_color"]
             await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
+        elif domain == "cover":
+            #if it is a cover, checking the position
+            _LOGGER.debug("Switching Cover %s to %s", entity_id, state.state)
+            if "current_tilt_position" in state.attributes:
+                #Blocking open/close service if the tilt need to be called at the end
+                blocking = True
+            else:
+                blocking = False
+            if state.state == "closed":
+                _LOGGER.debug("Closing cover %s", entity_id)
+                #await hass.services.async_call("cover", "close_cover", service_data, blocking=blocking)
+            elif state.state == "open":
+                if "current_position" in state.attributes:
+                    service_data["position"] = state.attributes["current_position"]
+                    _LOGGER.debug("Changing cover %s position to %s", entity_id, state.attributes["current_position"])
+                    #await hass.services.async_call("cover", "set_cover_position", service_data, blocking=blocking)
+                    del service_data["position"]
+                else: #no position info, just open it
+                    _LOGGER.debug("Opening cover %s", entity_id)
+                    #await hass.services.async_call("cover", "open_cover", service_data, blocking=blocking)
+            if state.state in ["closed", "open"]: #nothing to do if closing or opening. Wait for the status to be 'stabilized'
+                if "current_tilt_position" in state.attributes:
+                    service_data["tilt_position"] = state.attributes["current_tilt_position"]
+                    _LOGGER.debug("Changing cover %s tilt position to %s", entity_id, state.attributes["current_tilt_position"])
+                    #await hass.services.async_call("cover", "set_cover_tilt_position", service_data, blocking=False)
+                    del service_data["tilt_position"]
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
             await hass.services.async_call("homeassistant", "turn_"+state.state, service_data, blocking=False)
