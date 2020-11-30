@@ -35,7 +35,7 @@ You can edit these configurations afterwards by clicking on Options in the integ
 
 # Use it
 
-The component will create an entity called `switch.presence_simulation`. This entity will be set to `on` when the entity is running. `off` otherwise.
+The component will create an entity called `switch.presence_simulation`. This entity will be set to `on` when the simulation is running. `off` otherwise.
 You have 2 ways of launching the simulation:
 ## With the switch
 Toggling the `switch.presence_simulation` will toggle the presence simulation.
