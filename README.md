@@ -44,7 +44,7 @@ Toggling the `switch.presence_simulation` will toggle the presence simulation.
 Three services are available:
 ### Start the simulation
 The service `presence_simulation.start` will start the simulation and set the `switch.presence_simulation` entity to `on`.
-Optionally, you can reference a list of entities if you wan't to overridde the component configuration:
+Optionally, you can reference a list of entities if you want to overridde the component configuration:
 ```
 entity_id:
   - group.outside_lights
