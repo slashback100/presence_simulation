@@ -196,6 +196,21 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
 
     async def update_entity(entity_id, state):
         """ Switch the entity """
+        # use service scene.apply ?? https://www.home-assistant.io/integrations/scene/
+        """
+        service_data = {}
+        service_data[entity_id]["state"] = state.state
+        if "brightness" in state.attributes:
+            service_data[entity_id]["bigthness"] = state.attributes["brigthness"]
+        if "rgb_color" in state.attributes:
+            service_data[entity_id]["rgb_color"] = state.attributes["rgb_color"]
+        if "current_position" in state.attributes:
+            service_data[entity_id]["position"] = state.attributes["position"]
+        if "current_tilt_position" in state.attributes:
+            service_data[entity_id]["tilt_position"] = state.attributes["tilt_position"]
+        service_data = {"entities": service_data}
+        await hass.services.async_call("scene", "apply", service_data, blocking=False)
+        """
         # get the domain of the entity
         domain = entity_id.split('.')[0]
         #prepare the data of the services
