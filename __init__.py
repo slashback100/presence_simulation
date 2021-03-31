@@ -234,21 +234,21 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
                 blocking = False
             if state.state == "closed":
                 _LOGGER.debug("Closing cover %s", entity_id)
-                #await hass.services.async_call("cover", "close_cover", service_data, blocking=blocking)
+                await hass.services.async_call("cover", "close_cover", service_data, blocking=blocking)
             elif state.state == "open":
                 if "current_position" in state.attributes:
                     service_data["position"] = state.attributes["current_position"]
                     _LOGGER.debug("Changing cover %s position to %s", entity_id, state.attributes["current_position"])
-                    #await hass.services.async_call("cover", "set_cover_position", service_data, blocking=blocking)
+                    await hass.services.async_call("cover", "set_cover_position", service_data, blocking=blocking)
                     del service_data["position"]
                 else: #no position info, just open it
                     _LOGGER.debug("Opening cover %s", entity_id)
-                    #await hass.services.async_call("cover", "open_cover", service_data, blocking=blocking)
+                    await hass.services.async_call("cover", "open_cover", service_data, blocking=blocking)
             if state.state in ["closed", "open"]: #nothing to do if closing or opening. Wait for the status to be 'stabilized'
                 if "current_tilt_position" in state.attributes:
                     service_data["tilt_position"] = state.attributes["current_tilt_position"]
                     _LOGGER.debug("Changing cover %s tilt position to %s", entity_id, state.attributes["current_tilt_position"])
-                    #await hass.services.async_call("cover", "set_cover_tilt_position", service_data, blocking=False)
+                    await hass.services.async_call("cover", "set_cover_tilt_position", service_data, blocking=False)
                     del service_data["tilt_position"]
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
