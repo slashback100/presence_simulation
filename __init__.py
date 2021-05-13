@@ -70,25 +70,24 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
         for entity in entities:
             #to make it asyncable, not sure it is needed
             await asyncio.sleep(0)
-            if entity[0:5] == "group": # if the domain of the entity is a group:
-                try:
-                    #get the list of the associated entities
-                    group_entities = hass.states.get(entity).attributes["entity_id"]
-                except Exception as e:
-                    _LOGGER.error("Error when trying to identify entity %s: %s", entity, e)
-                else:
-                    #and call recursively, in case a group contains a group
-                    group_entities_expanded = await async_expand_entities(group_entities)
-                    _LOGGER.debug("State %s", group_entities_expanded)
-                    for tmp in group_entities_expanded:
-                        entities_new.append(tmp)
-            else:
+            try:
+                #get the list of the associated entities
+                #the entity_id attribute will be filled for groups or light groups
+                group_entities = hass.states.get(entity).attributes["entity_id"]
+            except Exception as e:
+                _LOGGER.debug("Entity %s has no attribute entity_id, it is not a group or a light group", entity)
                 try:
                     hass.states.get(entity)
                 except Exception as e:
                     _LOGGER.error("Error when trying to identify entity %s: %s", entity, e)
                 else:
                     entities_new.append(entity)
+            else:
+                #and call recursively, in case a group contains a group
+                group_entities_expanded = await async_expand_entities(group_entities)
+                _LOGGER.debug("State %s", group_entities_expanded)
+                for tmp in group_entities_expanded:
+                    entities_new.append(tmp)
         return entities_new
 
     async def handle_presence_simulation(call, restart=False):
