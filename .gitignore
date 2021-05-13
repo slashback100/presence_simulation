@@ -1,8 +1,6 @@
-<<<<<<< HEAD
-__pycache__/*
 commit
+makePackage
 .pre-commit-config.yaml
-=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -132,4 +130,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
->>>>>>> f065b5688fc18a9f6cfbd9198ca59171d6b2a4e6
