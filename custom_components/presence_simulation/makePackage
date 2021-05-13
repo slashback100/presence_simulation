@@ -1,0 +1,3 @@
+#!/bin/bash
+tag=$1
+zip HomeAssistance_PresenceSimulation_$tag.zip -r translations/ images/ __init__.py config_flow.py const.py manifest.json services.yaml strings.json switch.py
