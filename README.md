@@ -1,5 +1,5 @@
 # Presence Simulation
-This Home Assistant component aim to provide a presence simulation in your home while you are away. It will turn on & off lights, switches, ... based on your historic.
+This Home Assistant component aim to provide a presence simulation in your home while you are away. It will turn on & off lights, switches, covers... based on your historic.
 
 # How it works
 It will look in the DB for the states historic of all the entities configured in the component for a period corresponding the a `delta` variable defined in the component.
@@ -11,11 +11,11 @@ The `historic` component should be activated, and the period kept in the DB shou
 
 # Installation
 ## Option 1
-- In your Home Assistant configuration directory (`~/.homeassistant`), create a directory `custom_components/presence_simulation` and put the code in it.
+- In your Home Assistant configuration directory (`~/.homeassistant` for instance), create a directory `custom_components/presence_simulation` and put the code in it.
 - Restart Home Assistant
 ## Option 2
-- In your Home Assistant configuration directory (`~/.homeassistant`), create a directory `custom_components` if not already existing and navigate in it.
-- `git clone https://github.com/slashback100/presence_simulation.git`
+- Go in your Home Assistant configuration directory (`~/.homeassistant` for instance)
+- `git clone https://github.com/slashback100/presence_simulation.git`. It will create the directory `custom_components/presence_simulation`
 - Restart Home Assistant
 # Configuration
 * In the UI, go in Configuration > Integration
@@ -27,7 +27,7 @@ The `historic` component should be activated, and the period kept in the DB shou
   <img src="/images/configFlow..png" width="400" alt="accessibility text">
 </p>
 
-* Set the group of entity to be used in the simulation. It can be a group of lights, switches or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
+* Set the group of entity to be used in the simulation. It can be a group of lights, switches, covers, light groups or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
 * Set the number of days of historic the simulation will use (the delta)
 * Set the number of scan interval used to switch entities in seconds. Default is 30 seconds. Warning, the smallest number you choose, the more computing process the component will take.
 
