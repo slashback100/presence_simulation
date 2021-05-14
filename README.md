@@ -31,6 +31,8 @@ The `historic` component should be activated, and the period kept in the DB shou
 * Set the number of days of historic the simulation will use (the delta)
 * Set the number of scan interval used to switch entities in seconds. Default is 30 seconds. Warning, the smallest number you choose, the more computing process the component will take.
 
+(!) you may encounter an "User input malformed" error. Change the Delta to something else than 7, save, then you can change back to 7 clicking in the option of the integration. This is a known issue.
+
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
 # Use it
