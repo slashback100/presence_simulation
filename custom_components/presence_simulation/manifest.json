@@ -5,7 +5,7 @@
   "issue_tracker": "https://github.com/slashback100/presence_simulation/issues",
   "dependencies": ["history"],
   "config_flow": true,
-  "version": 1,
+  "version": "1.0",
   "codeowners": [
     "@slashback"
   ]
