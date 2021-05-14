@@ -7,7 +7,7 @@
   "config_flow": true,
   "version": "1.0",
   "codeowners": [
-    "@slashback"
+    "@slashback100"
   ],
   "iot_class": "local_polling"
 }
