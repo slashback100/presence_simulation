@@ -77,8 +77,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
                 #and call recursively, in case a group contains a group
                 group_entities_expanded = await async_expand_entities(group_entities)
                 _LOGGER.debug("State %s", group_entities_expanded)
-                for tmp in group_entities_expanded:
-                    entities_new.append(tmp)
+                entities_new += group_entities_expanded
             else:
                 _LOGGER.debug("Entity %s has no attribute entity_id, it is not a group nor a light group", entity)
                 try:
