@@ -17,6 +17,12 @@ The `historic` component should be activated, and the period kept in the DB shou
 - Go in your Home Assistant configuration directory (`~/.homeassistant` for instance)
 - `git clone https://github.com/slashback100/presence_simulation.git`. It will create the directory `custom_components/presence_simulation`
 - Restart Home Assistant
+## Option 3
+Using HACS:
+- Add a custom repository: https://github.com/slashback100/presence_simulation
+- Choose the category "Integration"
+- Install it through HACS 
+- Restart Home Assistant
 # Configuration
 * In the UI, go in Configuration > Integration
 * Click on the '+' button
