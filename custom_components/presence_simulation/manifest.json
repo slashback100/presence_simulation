@@ -8,5 +8,6 @@
   "version": "1.0",
   "codeowners": [
     "@slashback"
-  ]
+  ],
+  "iot_class": "local_polling"
 }
