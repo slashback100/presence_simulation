@@ -1,6 +1,7 @@
 #from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.components.switch import SwitchEntity
 from datetime import datetime, timezone, timedelta
+import pytz
 import math
 import logging
 from .const import (
@@ -72,6 +73,8 @@ class PresenceSimulationSwitch(SwitchEntity):
         """Update the attributes in regards to the list of next events"""
         if len(self._next_events) > 0:
             self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = self._next_events[0] #list is sorted
+            tz = pytz.timezone(self.hass.config.as_dict()['time_zone'])
+            self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(tz).strftime("%d/%m/%Y %H:%M:%S")
         else:
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
                 if prop in self.attr:
@@ -81,6 +84,8 @@ class PresenceSimulationSwitch(SwitchEntity):
         """Update the attributes in regards to the list of next events"""
         if len(self._next_events) > 0:
             self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = self._next_events[0] #list is sorted
+            tz = pytz.timezone(self.hass.config.as_dict()['time_zone'])
+            self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(tz).strftime("%d/%m/%Y %H:%M:%S")
         else:
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
                 if prop in self.attr:
