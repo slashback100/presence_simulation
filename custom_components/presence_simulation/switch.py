@@ -76,7 +76,8 @@ class PresenceSimulationSwitch(SwitchEntity):
             try:
                 tz = pytz.timezone(self.hass.config.as_dict()['time_zone'])
                 self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(tz).strftime("%d/%m/%Y %H:%M:%S")
-            except:
+            except Exception as e:
+                _LOGGER.error("Exception while trying to convert utc to local time: %s",e)
                 pass
         else:
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
@@ -90,7 +91,8 @@ class PresenceSimulationSwitch(SwitchEntity):
             try:
                 tz = pytz.timezone(self.hass.config.as_dict()['time_zone'])
                 self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(tz).strftime("%d/%m/%Y %H:%M:%S")
-            except:
+            except Exception as e:
+                _LOGGER.error("Exception while trying to convert utc to local time: %s",e)
                 pass
         else:
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
