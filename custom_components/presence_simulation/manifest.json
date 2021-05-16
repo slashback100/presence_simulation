@@ -3,7 +3,7 @@
   "name": "Presence Simulation",
   "documentation": "https://github.com/slashback100/presence_simulation",
   "issue_tracker": "https://github.com/slashback100/presence_simulation/issues",
-  "dependencies": ["history"],
+  "dependencies": ["history", "recorder"],
   "config_flow": true,
   "version": "1.0",
   "codeowners": [
