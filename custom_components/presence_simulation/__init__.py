@@ -5,6 +5,10 @@ import time
 import asyncio
 from datetime import datetime,timedelta,timezone
 from homeassistant.components import history
+import homeassistant.util.dt as dt_util
+from homeassistant.const import EVENT_HOMEASSISTANT_START
+from homeassistant.components.recorder.models import States
+from homeassistant.components.recorder.const import DATA_INSTANCE
 from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
@@ -169,11 +173,9 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
         _LOGGER.debug("Simulate one entity: %s", entity_id)
         for state in hist: #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
-            #_LOGGER.debug("Switch of %s foreseen at %s", entity_id, (state.last_updated+timedelta(delta)).replace(tzinfo=hass.config.time_zone))
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(delta))
             #get the switch entity
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
-            #await entity.async_add_next_event((state.last_updated+timedelta(delta)).replace(tzinfo=hass.config.time_zone), entity_id, state.state)
             await entity.async_add_next_event(state.last_updated+timedelta(delta), entity_id, state.state)
 
             #a while with sleeps of _interval_ seconds is used here instead of a big sleep to check regulary the is_running() parameter
@@ -256,10 +258,21 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
         return entity.is_on
 
+    async def restore_state(call):
+        """Restore states."""
+        _LOGGER.debug("restoring states")
+        """ retrieve the last status after last shutdown and restore it """
+        session = hass.data[DATA_INSTANCE].get_session()
+        result = session.query(States.state).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_changed.desc()).limit(1)
+        if result.count() > 0 and result[0][0] == "on":
+          _LOGGER.debug("Simulation was on before last shutdown, restarting it")
+          await handle_presence_simulation(None)
 
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
     hass.services.async_register(DOMAIN, "toggle", handle_toggle_presence_simulation)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, restore_state)
+   # await restore_state()
 
     return True
 
