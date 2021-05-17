@@ -41,6 +41,7 @@ The `history` integration must be activated - [which it is by default](https://w
 * Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
 * Set the number of days of history the simulation will use (the delta)
 * Set the number for a scan interval used to switch entities in seconds. Default is 30 seconds. Warning, the smaller the number you choose, the more computing process the component will take.
+* Choose to restore the states as they were before the end of ths simulation
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
@@ -54,13 +55,14 @@ Toggling the `switch.presence_simulation` will toggle the presence simulation.
 Three services are available:
 ### Start the simulation
 The service `presence_simulation.start` will start the simulation and set the `switch.presence_simulation` entity to `on`.
-Optionally, you can reference a delta or list of entities if you want to overridde the component configuration:
+Optionally, you can reference a list of entities, a delta or choose to restore the states if you want to override the component configuration:
 ```
 entity_id:
   - group.outside_lights
   - light.living_room
   - light.hall
 delta: 5
+restore_states: True
 ```
 ### Stop the simulation
 The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
