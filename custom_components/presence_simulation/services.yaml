@@ -6,8 +6,10 @@ start:
       example: >
             - group.outside_lights
     delta:
-      description: Overridde the default number of days used by the simulation
+      description: Override the default number of days used by the simulation
       example: 7
+    restore_states:
+      description: Override the default restore switch. If set, the states will be restored after the simulation
 stop:
   description: Stop the presence simulation
 toggle:

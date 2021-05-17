@@ -13,7 +13,8 @@ from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
         SWITCH,
-        RESTORE_SCENE
+        RESTORE_SCENE,
+        SCENE_PLATFORM
 )
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,9 +66,11 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             #empty the start_datetime  attribute
             await entity.reset_start_datetime()
             await entity.reset_entities()
-            if restoreAfterStop:
+            # if the scene exist, turn it on
+            scene = hass.states.get(SCENE_PLATFORM+"."+RESTORE_SCENE)
+            if scene is not None:
                 service_data = {}
-                service_data["entity_id"] = RESTORE_SCENE
+                service_data["entity_id"] = SCENE_PLATFORM+"."+RESTORE_SCENE
                 _LOGGER.debug("Restoring scene after the simulation")
                 try:
                     await hass.services.async_call("scene", "turn_on", service_data, blocking=False)
@@ -115,9 +118,11 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             else:
                 overridden_entities = [call.data.get("entity_id", entities)]
             overridden_delta = call.data.get("delta", delta)
+            overridden_restore = call.data.get("restore_states", restoreAfterStop)
         elif not restart: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
             overridden_entities = entities
             overridden_delta = delta
+            overridden_restore = restoreAfterStop
         #else, should not happen
 
         #get the switch entity
@@ -139,7 +144,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         if not restart:
             #set attribute on the switch
             await entity.set_start_datetime(datetime.now(hass.config.time_zone))
-            if restoreAfterStop:
+            if overridden_restore:
                 service_data = {}
                 service_data["scene_id"] = RESTORE_SCENE
                 service_data["snapshot_entities"] = expanded_entities
