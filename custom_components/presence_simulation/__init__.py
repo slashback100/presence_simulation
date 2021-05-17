@@ -12,7 +12,8 @@ from homeassistant.components.recorder.const import DATA_INSTANCE
 from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
-        SWITCH
+        SWITCH,
+        RESTORE_SCENE
 )
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,26 +28,31 @@ async def async_setup_entry(hass, entry):
         interval = entry.data['interval']
     else:
         interval = 30
-    return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], interval)
+    if 'restore' in entry.data:
+        restore = entry.data['restore']
+    else:
+        restore = False
+    return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], interval, restore)
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
     if config.get(DOMAIN) is None:
         # We get here if the integration is set up using config flow
         return True
-    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"), config[DOMAIN].get('interval', '30'))
+    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"), config[DOMAIN].get('interval', '30'), config[DOMAIN].get('restore', False))
 
 
-async def async_mysetup(hass, entities, deltaStr, refreshInterval):
+async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam):
     """Set up this component (YAML or UI)."""
     #delta is the size in days of the historic to get from the DB
     delta = int(deltaStr)
-    #delta = 1/24+4/24/6 # for test
     #interval is the number of seconds the component will wait before checking if the entity need to be switch
     interval = int(refreshInterval)
+    restoreAfterStop = restoreParam
     _LOGGER.debug("Config: Entities for presence simulation: %s", entities)
     _LOGGER.debug("Config: Cycle of %s days", delta)
     _LOGGER.debug("Config: Scan interval of %s seconds", interval)
+    _LOGGER.debug("Config: Restore state: %s", restoreAfterStop)
     _LOGGER.debug("Config: Timezone that will be used to display datetime: %s", hass.config.time_zone)
 
     async def stop_presence_simulation(err=None, restart=False):
@@ -59,6 +65,15 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
             #empty the start_datetime  attribute
             await entity.reset_start_datetime()
             await entity.reset_entities()
+            if restoreAfterStop:
+                service_data = {}
+                service_data["entity_id"] = RESTORE_SCENE
+                _LOGGER.debug("Restoring scene after the simulation")
+                try:
+                    await hass.services.async_call("scene", "turn_on", service_data, blocking=False)
+                except Exception as e:
+                    _LOGGER.error("Error when restoring the scene after the simulation")
+                    pass
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
@@ -117,16 +132,25 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
         _LOGGER.debug("Presence simulation started")
 
         current_date = datetime.now(timezone.utc)
-        if not restart:
-            #set attribute on the switch
-            await entity.set_start_datetime(datetime.now(hass.config.time_zone))
         #compute the start date that will be used in the query to get the historic of the entities
         minus_delta = current_date + timedelta(-overridden_delta)
         #expand the entitiies, meaning replace the groups with the entities in it
         expanded_entities = await async_expand_entities(overridden_entities)
+        if not restart:
+            #set attribute on the switch
+            await entity.set_start_datetime(datetime.now(hass.config.time_zone))
+            if restoreAfterStop:
+                service_data = {}
+                service_data["scene_id"] = RESTORE_SCENE
+                service_data["snapshot_entities"] = expanded_entities
+                _LOGGER.debug("Saving scene before launching the simulation")
+                try:
+                    await hass.services.async_call("scene", "create", service_data, blocking=True)
+                except Exception as e:
+                    _LOGGER.error("Scene could not be created, continue without the restore functionality: %s", e)
+                    #restoreAfterStop = False
         await entity.set_entities(expanded_entities)
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
-        #dic = history.get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities)
         dic = history.get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, significant_changes_only=False)
         _LOGGER.debug("history: %s", dic)
         for entity_id in dic:
@@ -272,7 +296,6 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval):
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
     hass.services.async_register(DOMAIN, "toggle", handle_toggle_presence_simulation)
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, restore_state)
-   # await restore_state()
 
     return True
 
@@ -283,4 +306,4 @@ async def update_listener(hass, entry):
     if len(entry.options) > 0:
         entry.data = entry.options
         entry.options = {}
-        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], entry.data["interval"])
+        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], entry.data["interval"], entry.data["restore"])

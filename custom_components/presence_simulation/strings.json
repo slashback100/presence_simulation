@@ -2,26 +2,28 @@
     "title": "Presence Simulation",
     "config": {
         "step": {
-		"user":{
-			"description": "Configuration",
-			"data": {
-				"entities": "Entity or group of entities",
-				"delta": "Delta (in days)",
-				"interval": "Refresh interval (in seconds)"
-			}
-		}
-	}
+            "user":{
+                "description": "Configuration",
+                "data": {
+                    "entities": "Entity or group of entities",
+                    "delta": "Delta (in days)",
+                    "interval": "Refresh interval (in seconds)",
+                    "restore": "Restore state after simulation"
+                }
+            }
+        }
     },
     "options": {
         "step": {
-		"init":{
-			"description": "Configuration",
-			"data": {
-				"entities": "Entity or group of entities",
-				"delta": "Delta (in days)",
-				"interval": "Refresh interval (in seconds)"
-			}
-		}
-	}
+            "init":{
+                "description": "Configuration",
+                "data": {
+                    "entities": "Entity or group of entities",
+                    "delta": "Delta (in days)",
+                    "interval": "Refresh interval (in seconds)",
+                    "restore": "Restore state after simulation"
+                }
+            }
+        }
     }
 }

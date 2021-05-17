@@ -2,26 +2,28 @@
     "title": "Simulation de présence",
     "config": {
         "step": {
-		"user":{
-			"description": "Configuration",
-			"data": {
-				"entities": "Entitée ou groupe d'entitées",
-				"delta": "Delta (nombre de jours)",
-				"interval": "Intervalle de mise à jour (en secondes)"
-			}
-		}
-	}
+            "user":{
+                "description": "Configuration",
+                "data": {
+                    "entities": "Entitée ou groupe d'entitées",
+                    "delta": "Delta (nombre de jours)",
+                    "interval": "Intervalle de mise à jour (en secondes)",
+                    "restore": "Restaurer l'état des entités a la fin de la simulation"
+                }
+            }
+        }
     },
     "options": {
         "step": {
-		"init":{
-			"description": "Configuration",
-			"data": {
-				"entities": "Entitée ou groupe d'entitées",
-				"delta": "Delta (nombre de jours)",
-				"interval": "Intervalle de mise à jour (en secondes)"
-			}
-		}
-	}
+            "init":{
+                "description": "Configuration",
+                "data": {
+                    "entities": "Entitée ou groupe d'entitées",
+                    "delta": "Delta (nombre de jours)",
+                    "interval": "Intervalle de mise à jour (en secondes)",
+                    "restore": "Restaurer l'état des entités a la fin de la simulation"
+                }
+            }
+        }
     }
 }
