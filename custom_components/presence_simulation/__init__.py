@@ -92,21 +92,20 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         for entity in entities:
             #to make it asyncable, not sure it is needed
             await asyncio.sleep(0)
-            if 'entity_id' in  hass.states.get(entity).attributes:
-                #get the list of the associated entities
-                #the entity_id attribute will be filled for groups or light groups
-                group_entities = hass.states.get(entity).attributes["entity_id"]
-                #and call recursively, in case a group contains a group
-                group_entities_expanded = await async_expand_entities(group_entities)
-                _LOGGER.debug("State %s", group_entities_expanded)
-                entities_new += group_entities_expanded
+            if hass.states.get(entity) is None:
+                _LOGGER.error("Error when trying to identify entity %s, it seems it doesn't exist", entity)
+                raise Exception("Entity is not known by HA, see log for more details")
             else:
-                _LOGGER.debug("Entity %s has no attribute entity_id, it is not a group nor a light group", entity)
-                try:
-                    hass.states.get(entity)
-                except Exception as e:
-                    _LOGGER.error("Error when trying to identify entity %s: %s", entity, e)
+                if 'entity_id' in  hass.states.get(entity).attributes:
+                    #get the list of the associated entities
+                    #the entity_id attribute will be filled for groups or light groups
+                    group_entities = hass.states.get(entity).attributes["entity_id"]
+                    #and call recursively, in case a group contains a group
+                    group_entities_expanded = await async_expand_entities(group_entities)
+                    _LOGGER.debug("State %s", group_entities_expanded)
+                    entities_new += group_entities_expanded
                 else:
+                    _LOGGER.debug("Entity %s has no attribute entity_id, it is not a group nor a light group", entity)
                     entities_new.append(entity)
         return entities_new
 
@@ -140,7 +139,14 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         #compute the start date that will be used in the query to get the historic of the entities
         minus_delta = current_date + timedelta(-overridden_delta)
         #expand the entitiies, meaning replace the groups with the entities in it
-        expanded_entities = await async_expand_entities(overridden_entities)
+        try:
+            expanded_entities = await async_expand_entities(overridden_entities)
+        except Exception as e:
+            _LOGGER.error("Error during identifing entities")
+            running = False
+            entity.internal_turn_off()
+            return
+
         if not restart:
             #set attribute on the switch
             await entity.set_start_datetime(datetime.now(hass.config.time_zone))
@@ -251,7 +257,11 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                 service_data["brightness"] = state.attributes["brightness"]
             if "rgb_color" in state.attributes:
                 service_data["rgb_color"] = state.attributes["rgb_color"]
-            await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
+            if state.state == "on" or state.state == "off":
+                await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
+            else:
+                _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
+
         elif domain == "cover":
             #if it is a cover, checking the position
             _LOGGER.debug("Switching Cover %s to %s", entity_id, state.state)
@@ -280,7 +290,10 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                     del service_data["tilt_position"]
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
-            await hass.services.async_call("homeassistant", "turn_"+state.state, service_data, blocking=False)
+            if state.state == "on" or state.state == "off":
+                await hass.services.async_call("homeassistant", "turn_"+state.state, service_data, blocking=False)
+            else:
+                _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
 
     def is_running():
         """Returns true if the simulation is running"""
