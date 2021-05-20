@@ -35,13 +35,13 @@ The `history` integration must be activated - [which it is by default](https://w
 * Confirm:
 
 <p align="center">
-  <img src="/custom_components/presence_simulation/images/configFlow.png" width="400" alt="accessibility text">
+  <img src="https://github.com/slashback100/presence_simulation/raw/main/custom_components/presence_simulation/images/configFlow.png" width="400" alt="accessibility text">
 </p>
 
 * Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
 * Set the number of days of history the simulation will use (the delta)
 * Set the number for a scan interval used to switch entities in seconds. Default is 30 seconds. Warning, the smaller the number you choose, the more computing process the component will take.
-* Choose to restore the states as they were before the end of ths simulation
+* After the simulation, choose to restore the states as they were before the start of ths simulation
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
