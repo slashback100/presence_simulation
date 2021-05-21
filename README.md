@@ -28,6 +28,8 @@ The `history` integration must be activated - [which it is by default](https://w
 - Click Install below the found integration.
 - Restart Home Assistant
 
+NB: it can also be added as a custom repository if you have an issue with above procedure
+
 # Configuration
 * In the UI, go in Configuration > Integration
 * Click on the '+' button
