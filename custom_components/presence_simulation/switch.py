@@ -127,19 +127,33 @@ class PresenceSimulationSwitch(SwitchEntity):
     async def set_start_datetime(self, start_datetime):
         self.attr["simulation_start"] = start_datetime
 
-    async def reset_start_datetime(self):
-        if "simulation_start" in self.attr:
-            del self.attr["simulation_start"]
-
     async def set_delta(self, delta):
-        _LOGGER.debug("setting delta %s", delta)
         self.attr["delta"] = delta
 
     async def set_entities(self, entities):
         self.attr["entity_id"] = entities
 
-    async def reset_entities(self):
+    async def set_restore_states(self, restore_states):
+        self.attr["restore_states"] = restore_states
+
+    async def restore_states(self):
+        if 'restore_states' in self.attr:
+            return self.attr['restore_states']
+        else:
+            return False
+
+    async def reset_start_datetime(self):
+        if "simulation_start" in self.attr:
+            del self.attr["simulation_start"]
+
+    async def reset_delta(self):
         if "delta" in self.attr:
             del self.attr["delta"]
+
+    async def reset_entities(self):
         if "entity_id" in self.attr:
             del self.attr["entity_id"]
+
+    async def reset_restore_states(self):
+        if "restore_states" in self.attr:
+            del self.attr["restore_states"]

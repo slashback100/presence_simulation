@@ -67,9 +67,13 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             #empty the start_datetime  attribute
             await entity.reset_start_datetime()
             await entity.reset_entities()
+            await entity.reset_delta()
             # if the scene exist, turn it on
+            # TODO check to improve, won't work if you launch one time is the restore state and then after without it.
+            #Can not just take restoreAfterStop cause if it is overriden in the service call, restoreAfterStop is not update
+            _LOGGER.debug("entity.restore_states %s", await entity.restore_states())
             scene = hass.states.get(SCENE_PLATFORM+"."+RESTORE_SCENE)
-            if scene is not None:
+            if scene is not None and await entity.restore_states():
                 service_data = {}
                 service_data["entity_id"] = SCENE_PLATFORM+"."+RESTORE_SCENE
                 _LOGGER.debug("Restoring scene after the simulation")
@@ -78,6 +82,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                 except Exception as e:
                     _LOGGER.error("Error when restoring the scene after the simulation")
                     pass
+            await entity.reset_restore_states()
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
@@ -119,17 +124,8 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                 overridden_entities = [call.data.get("entity_id", entities)]
             overridden_delta = call.data.get("delta", delta)
             overridden_restore = call.data.get("restore_states", restoreAfterStop)
-        elif not restart: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
-            if entities_after_restart is not None:
-                overridden_entities = entities_after_restart
-            else:
-                overridden_entities = entities
-            if delta_after_restart is not None:
-                overridden_delta = delta_after_restart
-            else:
-                overridden_delta = delta
-            overridden_restore = restoreAfterStop
-        else: #this is a restart and the simulation was launched after a restart of HA
+        else: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
+              # or this is a restart and the simulation was launched after a restart of HA
             if entities_after_restart is not None:
                 overridden_entities = entities_after_restart
             else:
@@ -149,6 +145,8 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         running = True
         #turn on the switch. Not calling turn_on() to avoid calling the start service again
         entity.internal_turn_on()
+        _LOGGER.debug("setting restore states %s", overridden_restore)
+        await entity.set_restore_states(overridden_restore)
         _LOGGER.debug("Presence simulation started")
 
         current_date = datetime.now(timezone.utc)
@@ -322,8 +320,9 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
 
     async def restore_state(call):
         """Restore states."""
-        _LOGGER.debug("Restoring states")
+        _LOGGER.debug("Restoring states after HA start")
         """ retrieve the last status after last shutdown and restore it """
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
         session = hass.data[DATA_INSTANCE].get_session()
         result = session.query(States.state, States.attributes).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_changed.desc()).limit(1)
         if result.count() > 0 and result[0][0] == "on":
@@ -334,6 +333,9 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             delta_after_restart=previous_attribute['delta']
           else:
             delta
+          # do not try to restore the previous state after the restart cause the scene has been lost during the restart
+          #if 'restore_states' in previous_attribute:
+          #  await entity.set_restore_states(previous_attribute['restore_states'])
           await handle_presence_simulation(call=None, entities_after_restart=previous_attribute["entity_id"], delta_after_restart=delta_after_restart)
 
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
