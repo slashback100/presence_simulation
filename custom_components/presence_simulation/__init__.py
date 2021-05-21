@@ -3,6 +3,7 @@
 import logging
 import time
 import asyncio
+import json
 from datetime import datetime,timedelta,timezone
 from homeassistant.components import history
 import homeassistant.util.dt as dt_util
@@ -109,7 +110,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                     entities_new.append(entity)
         return entities_new
 
-    async def handle_presence_simulation(call, restart=False):
+    async def handle_presence_simulation(call, restart=False, entities_after_restart=None, delta_after_restart=None):
         """Start the presence simulation"""
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
             if isinstance(call.data.get("entity_id", entities), list):
@@ -119,8 +120,14 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             overridden_delta = call.data.get("delta", delta)
             overridden_restore = call.data.get("restore_states", restoreAfterStop)
         elif not restart: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
-            overridden_entities = entities
-            overridden_delta = delta
+            if entities_after_restart is not None:
+                overridden_entities = entities_after_restart
+            else:
+                overridden_entities = entities
+            if delta_after_restart is not None:
+                overridden_delta = delta_after_restart
+            else:
+                overridden_delta = delta
             overridden_restore = restoreAfterStop
         #else, should not happen
 
@@ -305,10 +312,13 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         _LOGGER.debug("restoring states")
         """ retrieve the last status after last shutdown and restore it """
         session = hass.data[DATA_INSTANCE].get_session()
-        result = session.query(States.state).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_changed.desc()).limit(1)
+        result = session.query(States.state, States.attributes).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_changed.desc()).limit(1)
         if result.count() > 0 and result[0][0] == "on":
           _LOGGER.debug("Simulation was on before last shutdown, restarting it")
-          await handle_presence_simulation(None)
+          previous_attribute = json.loads(result[0][1])
+          _LOGGER.debug("attributes entity_id: %s", previous_attribute["entity_id"])
+          #async def handle_presence_simulation(call, restart=False, entities_after_restart=None, delta_after_restart=None):
+          await handle_presence_simulation(call=None, entities_after_restart=previous_attribute["entity_id"])
 
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
