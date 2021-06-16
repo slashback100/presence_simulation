@@ -163,7 +163,11 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
 
         if not restart:
             #set attribute on the switch
-            await entity.set_start_datetime(datetime.now(hass.config.time_zone))
+            try:
+                await entity.set_start_datetime(datetime.now(hass.config.time_zone))
+            except Exception as e:
+                _LOGGER.error("Start datetime could not be set to HA timezone: ", e)
+                await entity.set_start_datetime(datetime.now())
             if overridden_restore:
                 service_data = {}
                 service_data["scene_id"] = RESTORE_SCENE
