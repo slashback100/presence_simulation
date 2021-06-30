@@ -3,6 +3,7 @@ from homeassistant.components.switch import SwitchEntity
 from datetime import datetime, timezone, timedelta
 import math
 import logging
+import pytz
 from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
@@ -75,8 +76,10 @@ class PresenceSimulationSwitch(SwitchEntity):
             try:
                 self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(self.hass.config.time_zone).strftime("%d/%m/%Y %H:%M:%S")
             except Exception as e:
-                _LOGGER.error("Exception while trying to convert utc to local time: %s",e)
-                pass
+                try:
+                    self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(pytz.timezone(self.hass.config.time_zone)).strftime("%d/%m/%Y %H:%M:%S")
+                except Exception as e:
+                    _LOGGER.warning("Exception while trying to convert utc to local time: %s",e)
         else:
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
                 if prop in self.attr:
@@ -89,8 +92,10 @@ class PresenceSimulationSwitch(SwitchEntity):
             try:
                 self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(self.hass.config.time_zone).strftime("%d/%m/%Y %H:%M:%S")
             except Exception as e:
-                _LOGGER.error("Exception while trying to convert utc to local time: %s",e)
-                pass
+                try:
+                    self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(pytz.timezone(self.hass.config.time_zone)).strftime("%d/%m/%Y %H:%M:%S")
+                except Exception as e:
+                    _LOGGER.warning("Exception while trying to convert utc to local time: %s",e)
         else:
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
                 if prop in self.attr:
