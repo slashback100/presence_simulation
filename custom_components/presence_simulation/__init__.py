@@ -4,8 +4,9 @@ import logging
 import time
 import asyncio
 import json
+import pytz
 from datetime import datetime,timedelta,timezone
-from homeassistant.components import history
+from homeassistant.components.recorder.history import get_significant_states
 import homeassistant.util.dt as dt_util
 from homeassistant.const import EVENT_HOMEASSISTANT_START
 from homeassistant.components.recorder.models import States
@@ -166,8 +167,11 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             try:
                 await entity.set_start_datetime(datetime.now(hass.config.time_zone))
             except Exception as e:
-                _LOGGER.warning("Start datetime could not be set to HA timezone: ", e)
-                await entity.set_start_datetime(datetime.now())
+                try:
+                    await entity.set_start_datetime(datetime.now(pytz.timezone(hass.config.time_zone)))
+                except Exception as e:
+                    _LOGGER.warning("Start datetime could not be set to HA timezone: ", e)
+                    await entity.set_start_datetime(datetime.now())
             if overridden_restore:
                 service_data = {}
                 service_data["scene_id"] = RESTORE_SCENE
@@ -181,7 +185,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         await entity.set_entities(expanded_entities)
         await entity.set_delta(overridden_delta)
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
-        dic = history.get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, significant_changes_only=False)
+        dic = get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, significant_changes_only=False)
         _LOGGER.debug("history: %s", dic)
         for entity_id in dic:
             _LOGGER.debug('Entity %s', entity_id)
