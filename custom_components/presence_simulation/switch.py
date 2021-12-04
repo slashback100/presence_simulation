@@ -101,8 +101,9 @@ class PresenceSimulationSwitch(SwitchEntity):
                 if prop in self.attr:
                     del self.attr[prop]
 
+    #def device_state_attributes(self):
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Returns the attributes list"""
         return self.attr
 
