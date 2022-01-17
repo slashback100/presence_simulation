@@ -1,0 +1,29 @@
+{
+    "title": "Simulazione di presenza",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Configurazione",
+                "data": {
+                    "entities": "Entità o gruppo di entità",
+                    "delta": "Delta (in giorni)",
+                    "interval": "Intervallo di aggiornamento (in secondi)",
+                    "restore": "Ripristina stati precedenti alla simulazione"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Configurazione",
+                "data": {
+                    "entities": "Entità o gruppo di entità",
+                    "delta": "Delta (in giorni)",
+                    "interval": "Intervallo di aggiornamento (in secondi)",
+                    "restore": "Ripristina stati precedenti alla simulazione"
+                }
+            }
+        }
+    }
+}
