@@ -1,0 +1,29 @@
+{
+    "title": "Presence Simulation",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Konfiguration",
+                "data": {
+                    "entities": "Entitet eller grupp av entitieter",
+                    "delta": "Historik (i dagar)",
+                    "interval": "Uppdateringsintervall  (i sekunder)",
+                    "restore": "Återställ tillstånd efter simulering"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Configuration",
+                "data": {
+                    "entities": "Entitet eller grupp av entitieter",
+                    "delta": "Historik (i dagar)",
+                    "interval": "Uppdateringsintervall (i sekunder)",
+                    "restore": "Återställ tillstånd efter simulering"
+                }
+            }
+        }
+    }
+}
