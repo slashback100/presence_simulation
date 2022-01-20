@@ -1,0 +1,29 @@
+{
+    "title": "Aanwezigheidssimulatie",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Configuratie",
+                "data": {
+                    "entities": "Entity of groep van entities",
+                    "delta": "Delta (in dagen)",
+                    "interval": "Verversingsinterval (in seconden)",
+                    "restore": "Herstel toestand na simulatie"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Configuratie",
+                "data": {
+                    "entities": "Entity of groep van entities",
+                    "delta": "Delta (in dagen)",
+                    "interval": "Verversingsinterval (in seconden)",
+                    "restore": "Herstel toestand na simulatie"
+                }
+            }
+        }
+    }
+}
