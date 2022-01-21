@@ -190,7 +190,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         for entity_id in dic:
             _LOGGER.debug('Entity %s', entity_id)
             #launch an async task by entity_id
-            hass.async_create_task(simulate_single_entity(entity_id, dic[entity_id]))
+            hass.async_create_task(simulate_single_entity(entity_id, dic[entity_id], overridden_delta))
 
         #launch an async task that will restart the simulation after the delay has passed
         hass.async_create_task(restart_presence_simulation(call, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart))
@@ -229,20 +229,20 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             await handle_stop_presence_simulation(call, restart=True)
             await handle_presence_simulation(call, restart=True, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart)
 
-    async def simulate_single_entity(entity_id, hist):
+    async def simulate_single_entity(entity_id, hist, overridden_delta):
         """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
         for state in hist: #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
-            _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(delta))
+            _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(overridden_delta))
             #get the switch entity
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
-            await entity.async_add_next_event(state.last_updated+timedelta(delta), entity_id, state.state)
+            await entity.async_add_next_event(state.last_updated+timedelta(overridden_delta), entity_id, state.state)
 
             #a while with sleeps of _interval_ seconds is used here instead of a big sleep to check regulary the is_running() parameter
             #and therefore stop the task as soon as the service has been stopped
             while is_running():
-                minus_delta = datetime.now(timezone.utc) + timedelta(-delta)
+                minus_delta = datetime.now(timezone.utc) + timedelta(-overridden_delta)
                 if state.last_updated <= minus_delta:
                     break
                 #sleep as long as the event is not in the past
@@ -314,6 +314,15 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                     _LOGGER.debug("Changing cover %s tilt position to %s", entity_id, state.attributes["current_tilt_position"])
                     await hass.services.async_call("cover", "set_cover_tilt_position", service_data, blocking=False)
                     del service_data["tilt_position"]
+        elif domain == "media_player":
+            _LOGGER.debug("Switching media_player %s to %s", entity_id, state.state)
+            if state.state == "playing":
+                await hass.services.async_call("media_player", "media_play", service_data, blocking=False)
+            elif state.state != "unavailable": #idle, paused, off
+                await hass.services.async_call("media_player", "media_stop", service_data, blocking=False)
+            else:
+                _LOGGER.debug("State in unavailable, do nothing")
+
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
             if state.state == "on" or state.state == "off":
