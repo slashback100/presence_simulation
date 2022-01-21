@@ -1,0 +1,31 @@
+{
+    "title": "Simulation der Anwesenheit",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Konfiguration",
+                "data": {
+                    "entities": "Entität oder Gruppe von Entitäten",
+                    "delta": "Unterschied (in Tagen)",
+                    "interval": "Aktualisierungs-Intervall (in Sekunden)",
+                    "restore": "Zustand nach Simulation wiederherstellen",
+					"random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Konfiguration",
+                "data": {
+                    "entities": "Entität oder Gruppe von Entitäten",
+                    "delta": "Unterschied (in Tagen)",
+                    "interval": "Aktualisierungs-Intervall (in Sekunden)",
+                    "restore": "Zustand nach Simulation wiederherstellen",
+					"random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden"
+                }
+            }
+        }
+    }
+}
