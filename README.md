@@ -11,6 +11,12 @@ It will look in the DB for the states history of all the entities configured in 
 It will apply to the entites the same state (and some attributes like brightness and rgb_color) as it was `delta` days ago, in order to simulate your presence.
 If the service is running longer than the number of days defined as the `delta`, the component will simply be reset and start over, until the stop service is called.
 
+Supported entities domains:
+- `light`
+- `cover`
+- `media_player`
+- All domains for which entities have status `on` or `off` than can be turned on/off with service `homeassistant.turn_on` and `homeassistant.turn_off` (`automation`, `switch`, `group`...). 
+
 # Pre-requisit
 The `history` integration must be activated - [which it is by default](https://www.home-assistant.io/integrations/history/). The period kept in the DB should be bigger than the delta used in the simulation. The default number of days kept is 10 and this [can be configured](https://www.home-assistant.io/integrations/recorder/) with the `recorder` integration.
 
@@ -40,7 +46,7 @@ NB: it can also be added as a custom repository if you have an issue with above 
   <img src="https://github.com/slashback100/presence_simulation/raw/main/custom_components/presence_simulation/images/configFlow.png" width="400" alt="accessibility text">
 </p>
 
-* Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
+* Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups, media_player or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`
 * Set the number of days of history the simulation will use (the delta)
 * Set the number for a scan interval used to switch entities in seconds. Default is 30 seconds. Warning, the smaller the number you choose, the more computing process the component will take.
 * After the simulation, choose to restore the states as they were before the start of ths simulation
