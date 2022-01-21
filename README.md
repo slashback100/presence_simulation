@@ -44,6 +44,7 @@ NB: it can also be added as a custom repository if you have an issue with above 
 * Set the number of days of history the simulation will use (the delta)
 * Set the number for a scan interval used to switch entities in seconds. Default is 30 seconds. Warning, the smaller the number you choose, the more computing process the component will take.
 * After the simulation, choose to restore the states as they were before the start of ths simulation
+* You can choose to randomize the activation/deactivation of your entities. '0' to disable this behaviour, or a period in seconds for the maximum of seconds the random switching will be done. This random period is added (or substracted) from the time the entity was actually switched on or off in your historical data.
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
@@ -65,6 +66,7 @@ entity_id:
   - light.hall
 delta: 5
 restore_states: True
+random: 300
 ```
 ### Stop the simulation
 The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
