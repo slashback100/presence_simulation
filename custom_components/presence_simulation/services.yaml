@@ -10,6 +10,8 @@ start:
       example: 7
     restore_states:
       description: Override the default restore switch. If set, the states will be restored after the simulation
+    random:
+      description: Add a random factor (in seconds) to the historic events
 stop:
   description: Stop the presence simulation
 toggle:

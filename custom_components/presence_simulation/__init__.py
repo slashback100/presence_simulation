@@ -5,6 +5,7 @@ import time
 import asyncio
 import json
 import pytz
+import random
 from datetime import datetime,timedelta,timezone
 from homeassistant.components.recorder.history import get_significant_states
 import homeassistant.util.dt as dt_util
@@ -35,27 +36,33 @@ async def async_setup_entry(hass, entry):
         restore = entry.data['restore']
     else:
         restore = False
-    return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], interval, restore)
+    if 'random' in entry.data:
+        random = entry.data['random']
+    else:
+        random = 0
+    return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], interval, restore, random)
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
     if config.get(DOMAIN) is None:
         # We get here if the integration is set up using config flow
         return True
-    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"), config[DOMAIN].get('interval', '30'), config[DOMAIN].get('restore', False))
+    return await async_mysetup(hass, config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"), config[DOMAIN].get('interval', '30'), config[DOMAIN].get('restore', False), config[DOMAIN].get('random', '0'))
 
 
-async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam):
+async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam, randomParam):
     """Set up this component (YAML or UI)."""
     #delta is the size in days of the historic to get from the DB
     delta = int(deltaStr)
     #interval is the number of seconds the component will wait before checking if the entity need to be switch
     interval = int(refreshInterval)
     restoreAfterStop = restoreParam
+    addRandomTime = randomParam
     _LOGGER.debug("Config: Entities for presence simulation: %s", entities)
     _LOGGER.debug("Config: Cycle of %s days", delta)
     _LOGGER.debug("Config: Scan interval of %s seconds", interval)
     _LOGGER.debug("Config: Restore state: %s", restoreAfterStop)
+    _LOGGER.debug("Config: Add random time (s): %s", addRandomTime)
     _LOGGER.debug("Config: Timezone that will be used to display datetime: %s", hass.config.time_zone)
 
     async def stop_presence_simulation(err=None, restart=False):
@@ -69,6 +76,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             await entity.reset_start_datetime()
             await entity.reset_entities()
             await entity.reset_delta()
+            await entity.reset_random()
             # if the scene exist, turn it on
             # TODO check to improve, won't work if you launch one time is the restore state and then after without it.
             #Can not just take restoreAfterStop cause if it is overriden in the service call, restoreAfterStop is not update
@@ -116,7 +124,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                     entities_new.append(entity)
         return entities_new
 
-    async def handle_presence_simulation(call, restart=False, entities_after_restart=None, delta_after_restart=None):
+    async def handle_presence_simulation(call, restart=False, entities_after_restart=None, delta_after_restart=None, random_after_restart=None):
         """Start the presence simulation"""
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
             if isinstance(call.data.get("entity_id", entities), list):
@@ -125,6 +133,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                 overridden_entities = [call.data.get("entity_id", entities)]
             overridden_delta = call.data.get("delta", delta)
             overridden_restore = call.data.get("restore_states", restoreAfterStop)
+            overridden_random = call.data.get("random", addRandomTime)
         else: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
               # or this is a restart and the simulation was launched after a restart of HA
             if entities_after_restart is not None:
@@ -135,6 +144,10 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
                 overridden_delta = delta_after_restart
             else:
                 overridden_delta = delta
+            if random_after_restart is not None:
+                overridden_random = random_after_restart
+            else:
+                overridden_random = addRandomTime
             overridden_restore = restoreAfterStop
 
         #get the switch entity
@@ -148,12 +161,13 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         entity.internal_turn_on()
         _LOGGER.debug("setting restore states %s", overridden_restore)
         await entity.set_restore_states(overridden_restore)
+        await entity.set_random(overridden_random)
         _LOGGER.debug("Presence simulation started")
 
         current_date = datetime.now(timezone.utc)
         #compute the start date that will be used in the query to get the historic of the entities
         minus_delta = current_date + timedelta(-overridden_delta)
-        #expand the entitiies, meaning replace the groups with the entities in it
+        #expand the entities, meaning replace the groups with the entities in it
         try:
             expanded_entities = await async_expand_entities(overridden_entities)
         except Exception as e:
@@ -190,10 +204,10 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
         for entity_id in dic:
             _LOGGER.debug('Entity %s', entity_id)
             #launch an async task by entity_id
-            hass.async_create_task(simulate_single_entity(entity_id, dic[entity_id], overridden_delta))
+            hass.async_create_task(simulate_single_entity(entity_id, dic[entity_id], overridden_delta, overridden_random))
 
         #launch an async task that will restart the simulation after the delay has passed
-        hass.async_create_task(restart_presence_simulation(call, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart))
+        hass.async_create_task(restart_presence_simulation(call, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart, random_after_restart=overridden_random))
         _LOGGER.debug("All async tasks launched")
 
     async def handle_toggle_presence_simulation(call):
@@ -204,7 +218,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             await handle_presence_simulation(call, restart=False)
 
 
-    async def restart_presence_simulation(call, entities_after_restart=None, delta_after_restart=None):
+    async def restart_presence_simulation(call, entities_after_restart=None, delta_after_restart=None, random_after_restart=None):
         """Make sure that once _delta_ days is passed, relaunch the presence simulation for another _delta_ days"""
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
             overridden_delta = call.data.get("delta", delta)
@@ -227,9 +241,9 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
             _LOGGER.debug("%s has passed, presence simulation is relaunched", overridden_delta)
             #Call to stop needed to avoid the start to do nothing since already running
             await handle_stop_presence_simulation(call, restart=True)
-            await handle_presence_simulation(call, restart=True, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart)
+            await handle_presence_simulation(call, restart=True, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart, random_after_restart=random_after_restart)
 
-    async def simulate_single_entity(entity_id, hist, overridden_delta):
+    async def simulate_single_entity(entity_id, hist, overridden_delta, overridden_random):
         """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
         for state in hist: #hypothsis: states are ordered chronologically
@@ -241,8 +255,11 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
 
             #a while with sleeps of _interval_ seconds is used here instead of a big sleep to check regulary the is_running() parameter
             #and therefore stop the task as soon as the service has been stopped
+            random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
+            _LOGGER.debug("Randomize the event of %s seconds", random_delta)
+            random_delta = random_delta / 60 / 60 / 24 # random number in days
             while is_running():
-                minus_delta = datetime.now(timezone.utc) + timedelta(-overridden_delta)
+                minus_delta = datetime.now(timezone.utc) + timedelta(-overridden_delta) + timedelta(random_delta)
                 if state.last_updated <= minus_delta:
                     break
                 #sleep as long as the event is not in the past
@@ -347,13 +364,17 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam)
           previous_attribute = json.loads(result[0][1])
           _LOGGER.debug("attributes entity_id: %s", previous_attribute["entity_id"])
           if 'delta' in previous_attribute:
-            delta_after_restart=previous_attribute['delta']
+            delta_after_restart = previous_attribute['delta']
           else:
-            delta
+            delta_after_restart = delta
+          if 'random' in previous_attribute:
+            random_after_restart = previous_attribute['random']
+          else:
+            random_after_restart = addRandomTime
           # do not try to restore the previous state after the restart cause the scene has been lost during the restart
           #if 'restore_states' in previous_attribute:
           #  await entity.set_restore_states(previous_attribute['restore_states'])
-          await handle_presence_simulation(call=None, entities_after_restart=previous_attribute["entity_id"], delta_after_restart=delta_after_restart)
+          await handle_presence_simulation(call=None, entities_after_restart=previous_attribute["entity_id"], delta_after_restart=delta_after_restart, random_after_restart=random_after_restart)
 
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
@@ -369,4 +390,4 @@ async def update_listener(hass, entry):
     if len(entry.options) > 0:
         entry.data = entry.options
         entry.options = {}
-        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], entry.data["interval"], entry.data["restore"])
+        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], entry.data["interval"], entry.data["restore"], entry.data["random"])

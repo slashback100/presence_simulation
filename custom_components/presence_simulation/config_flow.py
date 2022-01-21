@@ -19,6 +19,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("delta", default=7): int,
             vol.Required("interval", default=30): int,
             vol.Required("restore", default=False): bool,
+            vol.Required("random", default=0): int,
         }
         if not info:
             return self.async_show_form(
@@ -56,12 +57,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if "restore" in self.config_entry.data:
                 restore = self.config_entry.data["restore"]
             else:
-                restore = False
+                restore = 0
+            if "random" in self.config_entry.data:
+                random = self.config_entry.data["random"]
+
             data_schema = {
                 vol.Required("entities", default=self.config_entry.data["entities"]): str,
                 vol.Required("delta", default=self.config_entry.data["delta"]): int,
                 vol.Required("interval", default=interval): int,
                 vol.Required("restore", default=restore): bool,
+                vol.Required("random", default=random): int,
             }
             return self.async_show_form(
                 step_id="init", data_schema=vol.Schema(data_schema)
