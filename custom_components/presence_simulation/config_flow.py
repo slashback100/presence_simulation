@@ -60,6 +60,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 restore = 0
             if "random" in self.config_entry.data:
                 random = self.config_entry.data["random"]
+            else:
+                random = 0
 
             data_schema = {
                 vol.Required("entities", default=self.config_entry.data["entities"]): str,
