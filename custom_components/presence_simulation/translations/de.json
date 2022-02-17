@@ -9,7 +9,7 @@
                     "delta": "Unterschied (in Tagen)",
                     "interval": "Aktualisierungs-Intervall (in Sekunden)",
                     "restore": "Zustand nach Simulation wiederherstellen",
-					"random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden"
+                    "random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden"
                 }
             }
         }
@@ -23,7 +23,7 @@
                     "delta": "Unterschied (in Tagen)",
                     "interval": "Aktualisierungs-Intervall (in Sekunden)",
                     "restore": "Zustand nach Simulation wiederherstellen",
-					"random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden"
+                    "random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden"
                 }
             }
         }

@@ -9,7 +9,7 @@
                     "delta": "Delta (in days)",
                     "interval": "Refresh interval (in seconds)",
                     "restore": "Restore state after simulation",
-					"random": "Add a random time for switching entities. This parameter define the max time in seconds"
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
                 }
             }
         }
@@ -23,7 +23,7 @@
                     "delta": "Delta (in days)",
                     "interval": "Refresh interval (in seconds)",
                     "restore": "Restore state after simulation",
-					"random": "Add a random time for switching entities. This parameter define the max time in seconds"
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
                 }
             }
         }

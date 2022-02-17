@@ -9,7 +9,7 @@
                     "delta": "Delta (nombre de jours)",
                     "interval": "Intervalle de mise à jour (en secondes)",
                     "restore": "Restaurer l'état des entités a la fin de la simulation",
-					"random": "Ajout d'un délai aléatoire sur les évènement. Ce paramètre donne le temps maximal en secondes"
+                    "random": "Ajout d'un délai aléatoire sur les évènement. Ce paramètre donne le temps maximal en secondes"
                 }
             }
         }
@@ -23,7 +23,7 @@
                     "delta": "Delta (nombre de jours)",
                     "interval": "Intervalle de mise à jour (en secondes)",
                     "restore": "Restaurer l'état des entités a la fin de la simulation",
-					"random": "Ajout d'un délai aléatoire sur les évènement. Ce paramètre donne le temps maximal en secondes"
+                    "random": "Ajout d'un délai aléatoire sur les évènement. Ce paramètre donne le temps maximal en secondes"
                 }
             }
         }

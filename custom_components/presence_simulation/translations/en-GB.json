@@ -2,30 +2,30 @@
     "title": "Presence Simulation",
     "config": {
         "step": {
-			"user":{
-				"description": "Configuration",
-				"data": {
-					"entities": "Entity or group of entities",
-					"delta": "Delta (in days)",
-					"interval": "Refresh interval (in seconds)",
-					"restore": "Restore state after simulation",
-					"random": "Add a random time for switching entities. This parameter define the max time in seconds"
-				}
-			}
-		}
+            "user":{
+                "description": "Configuration",
+                "data": {
+                    "entities": "Entity or group of entities",
+                    "delta": "Delta (in days)",
+                    "interval": "Refresh interval (in seconds)",
+                    "restore": "Restore state after simulation",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
+                }
+            }
+        }
     },
     "options": {
         "step": {
-			"init":{
-				"description": "Configuration",
-				"data": {
-					"entities": "Entity or group of entities",
-					"delta": "Delta (in days)",
-					"interval": "Refresh interval (in seconds)",
-					"restore": "Restore state after simulation",
-					"random": "Add a random time for switching entities. This parameter define the max time in seconds"
-				}
-			}
-		}
+            "init":{
+                "description": "Configuration",
+                "data": {
+                    "entities": "Entity or group of entities",
+                    "delta": "Delta (in days)",
+                    "interval": "Refresh interval (in seconds)",
+                    "restore": "Restore state after simulation",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
+                }
+            }
+        }
     }
 }
