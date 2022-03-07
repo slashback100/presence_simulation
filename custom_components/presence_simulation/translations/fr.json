@@ -5,11 +5,11 @@
             "user":{
                 "description": "Configuration",
                 "data": {
-                    "entities": "Entitée ou groupe d'entitées",
+                    "entities": "Entité ou groupe d'entités",
                     "delta": "Delta (nombre de jours)",
                     "interval": "Intervalle de mise à jour (en secondes)",
-                    "restore": "Restaurer l'état des entités a la fin de la simulation",
-                    "random": "Ajout d'un délai aléatoire sur les évènement. Ce paramètre donne le temps maximal en secondes"
+                    "restore": "Restaurer l'état des entités à la fin de la simulation",
+                    "random": "Ajout d'un délai aléatoire pour les changements d'entités. Ce paramètre définit le temps maximal en secondes"
                 }
             }
         }
@@ -19,11 +19,11 @@
             "init":{
                 "description": "Configuration",
                 "data": {
-                    "entities": "Entitée ou groupe d'entitées",
+                    "entities": "Entité ou groupe d'entités",
                     "delta": "Delta (nombre de jours)",
                     "interval": "Intervalle de mise à jour (en secondes)",
-                    "restore": "Restaurer l'état des entités a la fin de la simulation",
-                    "random": "Ajout d'un délai aléatoire sur les évènement. Ce paramètre donne le temps maximal en secondes"
+                    "restore": "Restaurer l'état des entités à la fin de la simulation",
+                    "random": "Ajout d'un délai aléatoire pour les changements d'entités. Ce paramètre définit le temps maximal en secondes"
                 }
             }
         }
