@@ -199,7 +199,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         await entity.set_entities(expanded_entities)
         await entity.set_delta(overridden_delta)
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
-        dic = get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, significant_changes_only=False)
+        dic = get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, include_start_time_state=True, significant_changes_only=False)
         _LOGGER.debug("history: %s", dic)
         for entity_id in dic:
             _LOGGER.debug('Entity %s', entity_id)
