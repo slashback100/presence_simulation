@@ -6,11 +6,13 @@ import asyncio
 import json
 import pytz
 import random
+import json
 from datetime import datetime,timedelta,timezone
 from homeassistant.components.recorder.history import get_significant_states
+from homeassistant.components.recorder import get_instance
 import homeassistant.util.dt as dt_util
 from homeassistant.const import EVENT_HOMEASSISTANT_START
-from homeassistant.components.recorder.models import States
+from homeassistant.components.recorder.models import States, StateAttributes
 from homeassistant.components.recorder.const import DATA_INSTANCE
 from .const import (
         DOMAIN,
@@ -58,6 +60,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
     interval = int(refreshInterval)
     restoreAfterStop = restoreParam
     addRandomTime = randomParam
+    previous_attribute = {}
     _LOGGER.debug("Config: Entities for presence simulation: %s", entities)
     _LOGGER.debug("Config: Cycle of %s days", delta)
     _LOGGER.debug("Config: Scan interval of %s seconds", interval)
@@ -171,7 +174,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         try:
             expanded_entities = await async_expand_entities(overridden_entities)
         except Exception as e:
-            _LOGGER.error("Error during identifing entities")
+            _LOGGER.error("Error during identifing entities: "+overridden_entities)
             running = False
             entity.internal_turn_off()
             return
@@ -199,6 +202,9 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         await entity.set_entities(expanded_entities)
         await entity.set_delta(overridden_delta)
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
+        await get_instance(hass).async_add_executor_job(handle_presence_simulation_sync, hass, call, minus_delta, expanded_entities, overridden_delta, overridden_random, entities_after_restart, delta_after_restart)
+
+    def handle_presence_simulation_sync(hass, call, minus_delta, expanded_entities, overridden_delta, overridden_random, entities_after_restart, delta_after_restart):
         dic = get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, include_start_time_state=True, significant_changes_only=False)
         _LOGGER.debug("history: %s", dic)
         for entity_id in dic:
@@ -209,6 +215,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         #launch an async task that will restart the simulation after the delay has passed
         hass.async_create_task(restart_presence_simulation(call, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart, random_after_restart=overridden_random))
         _LOGGER.debug("All async tasks launched")
+
 
     async def handle_toggle_presence_simulation(call):
         """Toggle the presence simulation"""
@@ -355,26 +362,40 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
     async def restore_state(call):
         """Restore states."""
         _LOGGER.debug("Restoring states after HA start")
+
         """ retrieve the last status after last shutdown and restore it """
-        entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
-        session = hass.data[DATA_INSTANCE].get_session()
-        result = session.query(States.state, States.attributes).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_changed.desc()).limit(1)
-        if result.count() > 0 and result[0][0] == "on":
-          _LOGGER.debug("Simulation was on before last shutdown, restarting it")
-          previous_attribute = json.loads(result[0][1])
-          _LOGGER.debug("attributes entity_id: %s", previous_attribute["entity_id"])
-          if 'delta' in previous_attribute:
-            delta_after_restart = previous_attribute['delta']
-          else:
-            delta_after_restart = delta
-          if 'random' in previous_attribute:
-            random_after_restart = previous_attribute['random']
-          else:
-            random_after_restart = addRandomTime
+        previous_attribute = {}
+        await get_instance(hass).async_add_executor_job(_restore_state_sync, previous_attribute)
+
+        _LOGGER.debug("Previous attribute is "+json.dumps(previous_attribute))
+        if previous_attribute["was_running"]:
           # do not try to restore the previous state after the restart cause the scene has been lost during the restart
-          #if 'restore_states' in previous_attribute:
-          #  await entity.set_restore_states(previous_attribute['restore_states'])
-          await handle_presence_simulation(call=None, entities_after_restart=previous_attribute["entity_id"], delta_after_restart=delta_after_restart, random_after_restart=random_after_restart)
+          await handle_presence_simulation(call = None,
+              entities_after_restart = previous_attribute['entity_id'],
+              delta_after_restart = previous_attribute["delta"],
+              random_after_restart = previous_attribute["random"])
+
+    def _restore_state_sync(previous_attribute):
+        _LOGGER.debug("In restore State Sync")
+
+        session = hass.data[DATA_INSTANCE].get_session()
+        result = session.query(States.state, StateAttributes.shared_attrs).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_changed.desc()).limit(1)
+        if result.count() > 0 and result[0][0] == "on":
+          previous_attribute["was_running"] = True
+          _LOGGER.debug("Simulation was on before last shutdown, restarting it.")
+
+          resultJson = json.loads(result[0][1])
+          if 'delta' in resultJson:
+            previous_attribute['delta'] = resultJson['delta']
+          else:
+            previous_attribute['delta'] = delta
+          if 'random' in resultJson:
+            previous_attribute['random'] = resultJson['random']
+          else:
+            previous_attribute['random'] = addRandomTime
+          previous_attribute['entity_id'] = resultJson['entity_id']
+        else:
+          previous_attribute["was_running"] = False
 
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
