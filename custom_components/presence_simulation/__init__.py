@@ -379,7 +379,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         _LOGGER.debug("In restore State Sync")
 
         session = hass.data[DATA_INSTANCE].get_session()
-        result = session.query(States.state, StateAttributes.shared_attrs).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_changed.desc()).limit(1)
+        result = session.query(States.state, StateAttributes.shared_attrs).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_updated.desc()).limit(1)
         if result.count() > 0 and result[0][0] == "on":
           previous_attribute["was_running"] = True
           _LOGGER.debug("Simulation was on before last shutdown, restarting it.")
