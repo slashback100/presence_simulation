@@ -111,8 +111,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
             #to make it asyncable, not sure it is needed
             await asyncio.sleep(0)
             if hass.states.get(entity) is None:
-                _LOGGER.error("Error when trying to identify entity %s, it seems it doesn't exist", entity)
-                raise Exception("Entity is not known by HA, see log for more details")
+                _LOGGER.error("Error when trying to identify entity %s, it seems it doesn't exist. Continuing without this entity", entity)
             else:
                 if 'entity_id' in  hass.states.get(entity).attributes:
                     #get the list of the associated entities
@@ -175,6 +174,12 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
             expanded_entities = await async_expand_entities(overridden_entities)
         except Exception as e:
             _LOGGER.error("Error during identifing entities: "+overridden_entities)
+            running = False
+            entity.internal_turn_off()
+            return
+
+        if len(expanded_entities) == 0:
+            _LOGGER.error("Error during identifing entities, no valid entities has been found")
             running = False
             entity.internal_turn_off()
             return
