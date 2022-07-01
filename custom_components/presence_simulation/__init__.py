@@ -12,7 +12,8 @@ from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.components.recorder import get_instance
 import homeassistant.util.dt as dt_util
 from homeassistant.const import EVENT_HOMEASSISTANT_START
-from homeassistant.components.recorder.models import States, StateAttributes
+#from homeassistant.components.recorder.models import States, StateAttributes
+from homeassistant.components.recorder.db_schema import States, StateAttributes
 from homeassistant.components.recorder.const import DATA_INSTANCE
 from .const import (
         DOMAIN,
