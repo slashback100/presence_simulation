@@ -1,0 +1,31 @@
+{
+    "title": "Symulacja obecności",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Konfiguracja",
+                "data": {
+                    "entities": "Encja lub grup encji",
+                    "delta": "Delta (w dniach)",
+                    "interval": "Częstotliwość odświeżania (w sekundach)",
+                    "restore": "Przywróć stan po symulacji",
+                    "random": "Dodaj losowy czas przełączania encji. Ten parametr określa maksymalny czas w sekundach"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Konfiguracja",
+                "data": {
+                    "entities": "Encja lub grup encji",
+                    "delta": "Delta (w dniach)",
+                    "interval": "Częstotliwość odświeżania (w sekundach)",
+                    "restore": "Przywróć stan po symulacji",
+                    "random": "Dodaj losowy czas przełączania encji. Ten parametr określa maksymalny czas w sekundach"
+                }
+            }
+        }
+    }
+}
