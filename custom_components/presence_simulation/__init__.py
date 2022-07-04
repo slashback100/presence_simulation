@@ -45,7 +45,10 @@ async def async_setup_entry(hass, entry):
         random = entry.data['random']
     else:
         random = 0
-    return await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], interval, restore, random)
+    elms = []
+    for elm in entry.data["entities"].split(","):
+        elms += [elm.strip()]
+    return await async_mysetup(hass, elms, entry.data["delta"], interval, restore, random)
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
@@ -419,4 +422,7 @@ async def update_listener(hass, entry):
     if len(entry.options) > 0:
         entry.data = entry.options
         entry.options = {}
-        await async_mysetup(hass, [entry.data["entities"]], entry.data["delta"], entry.data["interval"], entry.data["restore"], entry.data["random"])
+        elms = []
+        for elm in entry.data["entities"].split(","):
+            elms += [elm.strip()]
+        await async_mysetup(hass, elms, entry.data["delta"], entry.data["interval"], entry.data["restore"], entry.data["random"])
