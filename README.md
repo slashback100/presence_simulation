@@ -43,7 +43,7 @@ NB: it can also be added as a custom repository if you have an issue with above 
 * Confirm:
 
 <p align="center">
-  <img src="https://github.com/slashback100/presence_simulation/raw/main/custom_components/presence_simulation/images/configFlow.png" width="400" alt="accessibility text">
+  <img src="https://github.com/slashback100/presence_simulation/raw/main/custom_components/presence_simulation/images/configFlow.png" alt="accessibility text">
 </p>
 
 * Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups, media_player or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`. You can also setup several entities, separated with ','
