@@ -1,0 +1,31 @@
+{
+    "title": "Simulering af tilstedeværelse",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Konfiguration",
+                "data": {
+                    "entities": "Enhed eller gruppe af enheder",
+                    "delta": "Delta (i dage)",
+                    "interval": "Opdateringsinterval (i sekunder)",
+                    "restore": "Gendan tilstand efter simulering",
+                    "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Konfiguration",
+                "data": {
+                    "entities": "Enhed eller gruppe af enheder",
+                    "delta": "Delta (i dage)",
+                    "interval": "Opdateringsinterval (i sekunder)",
+                    "restore": "Gendan tilstand efter simulering",
+                    "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder"
+                }
+            }
+        }
+    }
+}
