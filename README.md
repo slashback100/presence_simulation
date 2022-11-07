@@ -78,3 +78,8 @@ random: 300
 The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
 ### Toggle the simulation
 The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `switch.presence_simulation` entity.
+
+# Buy me a coffee
+Liked some of my work? Buy me a coffee (or more likely a beer)
+
+<a href="https://www.buymeacoffee.com/slashback" target="_blank"><img src="https://bmc-cdn.nyc3.digitaloceanspaces.com/BMC-button-images/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
