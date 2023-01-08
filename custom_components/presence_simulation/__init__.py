@@ -26,6 +26,11 @@ from .const import (
 )
 _LOGGER = logging.getLogger(__name__)
 
+# Number of extra days of history to fetch before the simulation window.
+# The purpose is to locate the last state change for each entity that happened
+# before the simulation window starts. This is so we can start the simulation in
+# the right historical state.
+HISTORY_EXTRA_DAYS = 1
 async def async_setup_entry(hass, entry):
     """Set up this component using config flow."""
     _LOGGER.debug("async setup entry %s", entry.data["entities"])
@@ -174,7 +179,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
 
         current_date = datetime.now(timezone.utc)
         #compute the start date that will be used in the query to get the historic of the entities
-        minus_delta = current_date + timedelta(-overridden_delta)
+        minus_delta = current_date + timedelta(-overridden_delta) + timedelta(-HISTORY_EXTRA_DAYS)
         #expand the entities, meaning replace the groups with the entities in it
         try:
             expanded_entities = await async_expand_entities(overridden_entities)
@@ -265,28 +270,18 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
 
-        domain = entity_id.split('.')[0]
-        # To start the replay of history, rather than wait for the first change,
-        # which may not be for a while, try to guess the state of the
-        # entity. E.g., if the first change in a light during the replay window
-        # is to "on", then it must have been "off" at the beginning of the
-        # window.
-        # TODO - handle other domains besides lights.
-        if domain == "light":
-            first_change = hist[0].state
-            if first_change != "on" and first_change != "off":
-                _LOGGER.debug("State in neither on nor off (is %s), not initializing", first_change)
-            else:
-                service_data = {"entity_id": entity_id}
-                if "brightness" in hist[0].attributes:
-                    service_data["brightness"] = hist[0].attributes["brightness"]
-                if "rgb_color" in hist[0].attributes:
-                    service_data["rgb_color"] = hist[0].attributes["rgb_color"]
-                initial_state = "off" if first_change == "on" else "on"
-                _LOGGER.debug("Starting replay of %s at state %s", entity_id, initial_state)
-                await hass.services.async_call("light", "turn_"+initial_state, service_data, blocking=False)
-
-        for state in hist: #hypothsis: states are ordered chronologically
+        # hist contains state changes starting HISTORY_EXTRA_DAYS days before the sim interval.
+        # Filter out all but that last state change before the simulation start.
+        sim_start_time = datetime.now(timezone.utc) + timedelta(-overridden_delta)
+        
+        for idx, state in enumerate(hist): #hypothsis: states are ordered chronologically
+            is_first = False
+            if state.last_updated < sim_start_time:
+                # Skip this unless it's the last one before the sim start.
+                if (idx+1)<len(hist) and hist[idx+1].last_updated >= sim_start_time:
+                    is_first = True
+                else:
+                    continue
             _LOGGER.debug("State %s", state.as_dict())
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(overridden_delta))
             #get the switch entity
@@ -295,10 +290,16 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
 
             #a while with sleeps of _interval_ seconds is used here instead of a big sleep to check regulary the is_running() parameter
             #and therefore stop the task as soon as the service has been stopped
-            random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
-            _LOGGER.debug("Randomize the event of %s seconds", random_delta)
-            random_delta = random_delta / 60 / 60 / 24 # random number in days
-            target_time = state.last_updated + timedelta(overridden_delta) + timedelta(random_delta)
+            target_time = state.last_updated + timedelta(overridden_delta)
+            if is_first:
+                # The first entry in hist is from before the simulation started, to initialize the state
+                # so don't randomize its timing.
+                _LOGGER.debug("Not randomizing first history entry from before sim start")
+            else:
+                random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
+                _LOGGER.debug("Randomize the event of %s seconds", random_delta)
+                random_delta = random_delta / 60 / 60 / 24 # random number in days
+                target_time += timedelta(random_delta)
             while is_running():
                 #sleep as long as the event is not in the past
                 secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
