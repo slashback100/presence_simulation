@@ -250,10 +250,10 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         start_plus_delta = datetime.now(timezone.utc) + timedelta(overridden_delta)
         while is_running():
             #sleep until the 'delay' is passed
-            await asyncio.sleep(interval)
-            now = datetime.now(timezone.utc)
-            if now > start_plus_delta:
+            secs_left = (start_plus_delta - datetime.now(timezone.utc)).total_seconds()
+            if secs_left <= 0:
                 break
+            await asyncio.sleep(min(secs_left, interval))
 
         if is_running():
             _LOGGER.debug("%s has passed, presence simulation is relaunched", overridden_delta)
@@ -264,6 +264,28 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
     async def simulate_single_entity(entity_id, hist, overridden_delta, overridden_random):
         """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
+
+        domain = entity_id.split('.')[0]
+        # To start the replay of history, rather than wait for the first change,
+        # which may not be for a while, try to guess the state of the
+        # entity. E.g., if the first change in a light during the replay window
+        # is to "on", then it must have been "off" at the beginning of the
+        # window.
+        # TODO - handle other domains besides lights.
+        if domain == "light":
+            first_change = hist[0].state
+            if first_change != "on" and first_change != "off":
+                _LOGGER.debug("State in neither on nor off (is %s), not initializing", first_change)
+            else:
+                service_data = {"entity_id": entity_id}
+                if "brightness" in hist[0].attributes:
+                    service_data["brightness"] = hist[0].attributes["brightness"]
+                if "rgb_color" in hist[0].attributes:
+                    service_data["rgb_color"] = hist[0].attributes["rgb_color"]
+                initial_state = "off" if first_change == "on" else "on"
+                _LOGGER.debug("Starting replay of %s at state %s", entity_id, initial_state)
+                await hass.services.async_call("light", "turn_"+initial_state, service_data, blocking=False)
+
         for state in hist: #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(overridden_delta))
@@ -276,19 +298,20 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
             random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
             _LOGGER.debug("Randomize the event of %s seconds", random_delta)
             random_delta = random_delta / 60 / 60 / 24 # random number in days
+            target_time = state.last_updated + timedelta(overridden_delta) + timedelta(random_delta)
             while is_running():
-                minus_delta = datetime.now(timezone.utc) + timedelta(-overridden_delta) + timedelta(random_delta)
-                if state.last_updated <= minus_delta:
-                    break
                 #sleep as long as the event is not in the past
-                await asyncio.sleep(interval)
+                secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
+                if secs_left <= 0:
+                    break
+                await asyncio.sleep(min(secs_left, interval))
             if not is_running():
                 return # exit if state is false
             #call service to turn on/off the light
             await update_entity(entity_id, state)
             #and remove this event from the attribute list of the switch entity
             await entity.async_remove_event(entity_id)
-
+        
     async def update_entity(entity_id, state):
         """ Switch the entity """
         # use service scene.apply ?? https://www.home-assistant.io/integrations/scene/
