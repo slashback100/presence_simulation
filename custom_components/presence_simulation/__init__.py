@@ -265,19 +265,26 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
 
-        for state in hist: #hypothsis: states are ordered chronologically
+        for idx, state in enumerate(hist): #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(overridden_delta))
             #get the switch entity
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
             await entity.async_add_next_event(state.last_updated+timedelta(overridden_delta), entity_id, state.state)
 
-            #a while with sleeps of _interval_ seconds is used here instead of a big sleep to check regulary the is_running() parameter
-            #and therefore stop the task as soon as the service has been stopped
-            random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
-            _LOGGER.debug("Randomize the event of %s seconds", random_delta)
-            random_delta = random_delta / 60 / 60 / 24 # random number in days
-            target_time = state.last_updated + timedelta(overridden_delta) + timedelta(random_delta)
+            target_time = state.last_updated + timedelta(overridden_delta)
+            # Because we called get_significant_states with include_start_time_state=True
+            # the first element in hist should be the state at the start of the
+            # simulation (unless HA has restarted recently - see recorder/history.py and RecorderRuns)
+            # Do not add jitter to that first state time (which should be now anyways)
+            if idx > 0:
+                random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
+                _LOGGER.debug("Randomize the event of %s seconds", random_delta)
+                random_delta = random_delta / 60 / 60 / 24 # random number in days
+                target_time += timedelta(random_delta)
+
+            # Rather than a single sleep until target_time, periodically check to see if
+            # the simulation has been stopped.
             while is_running():
                 #sleep as long as the event is not in the past
                 secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
