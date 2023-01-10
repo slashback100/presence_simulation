@@ -250,10 +250,10 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         start_plus_delta = datetime.now(timezone.utc) + timedelta(overridden_delta)
         while is_running():
             #sleep until the 'delay' is passed
-            await asyncio.sleep(interval)
-            now = datetime.now(timezone.utc)
-            if now > start_plus_delta:
+            secs_left = (start_plus_delta - datetime.now(timezone.utc)).total_seconds()
+            if secs_left <= 0:
                 break
+            await asyncio.sleep(min(secs_left, interval))
 
         if is_running():
             _LOGGER.debug("%s has passed, presence simulation is relaunched", overridden_delta)
@@ -264,24 +264,33 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
     async def simulate_single_entity(entity_id, hist, overridden_delta, overridden_random):
         """This method will replay the historic of one entity received in parameter"""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
-        for state in hist: #hypothsis: states are ordered chronologically
+
+        for idx, state in enumerate(hist): #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(overridden_delta))
             #get the switch entity
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
             await entity.async_add_next_event(state.last_updated+timedelta(overridden_delta), entity_id, state.state)
 
-            #a while with sleeps of _interval_ seconds is used here instead of a big sleep to check regulary the is_running() parameter
-            #and therefore stop the task as soon as the service has been stopped
-            random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
-            _LOGGER.debug("Randomize the event of %s seconds", random_delta)
-            random_delta = random_delta / 60 / 60 / 24 # random number in days
+            target_time = state.last_updated + timedelta(overridden_delta)
+            # Because we called get_significant_states with include_start_time_state=True
+            # the first element in hist should be the state at the start of the
+            # simulation (unless HA has restarted recently - see recorder/history.py and RecorderRuns)
+            # Do not add jitter to that first state time (which should be now anyways)
+            if idx > 0:
+                random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
+                _LOGGER.debug("Randomize the event of %s seconds", random_delta)
+                random_delta = random_delta / 60 / 60 / 24 # random number in days
+                target_time += timedelta(random_delta)
+
+            # Rather than a single sleep until target_time, periodically check to see if
+            # the simulation has been stopped.
             while is_running():
-                minus_delta = datetime.now(timezone.utc) + timedelta(-overridden_delta) + timedelta(random_delta)
-                if state.last_updated <= minus_delta:
-                    break
                 #sleep as long as the event is not in the past
-                await asyncio.sleep(interval)
+                secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
+                if secs_left <= 0:
+                    break
+                await asyncio.sleep(min(secs_left, interval))
             if not is_running():
                 return # exit if state is false
             #call service to turn on/off the light

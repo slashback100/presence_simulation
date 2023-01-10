@@ -6,7 +6,7 @@
                 "data": {
                     "entities": "Entity or group of entities",
                     "delta": "Delta (in days)",
-                    "interval": "Refresh interval (in seconds)",
+                    "interval": "Poll interval (in seconds)",
                     "restore": "Restore state after simulation"
                 }
             }
@@ -19,7 +19,7 @@
                 "data": {
                     "entities": "Entity or group of entities",
                     "delta": "Delta (in days)",
-                    "interval": "Refresh interval (in seconds)",
+                    "interval": "Poll interval (in seconds)",
                     "restore": "Restore state after simulation"
                 }
             }
