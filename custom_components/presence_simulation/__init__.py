@@ -325,8 +325,28 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
             if "brightness" in state.attributes:
                 _LOGGER.debug("Got attribute brightness: %s", state.attributes["brightness"])
                 service_data["brightness"] = state.attributes["brightness"]
-            if "rgb_color" in state.attributes:
-                service_data["rgb_color"] = state.attributes["rgb_color"]
+            # Preserve accurate color information, where applicable
+            # color modes "onoff", "white", etc. do not need preservation.
+            # see https://developers.home-assistant.io/docs/core/entity/light/#color-modes
+            # see https://developers.home-assistant.io/docs/core/entity/light/#turn-on-light-device
+            if "color_mode" in state.attributes:
+                match state.attributes["color_mode"]:
+                    # color temperature mode (mireds, kelvin)
+                    case "color_temp":
+                        service_data["color_temp"]  = state.attributes["color_temp"]
+                    # RGB modes (red, green, blue, optional (cold or neutral) white, optional warm white)
+                    case "rgbww":
+                        service_data["rgbww_color"] = state.attributes["rgbww_color"]
+                    case "rgbw":
+                        service_data["rgbw_color"]  = state.attributes["rgbw_color"]
+                    case "rgb":
+                        service_data["rgb_color"]   = state.attributes["rgb_color"]
+                    # Hue/Saturation mode
+                    case "hs":
+                        service_data["hs_color"]    = state.attributes["hs_color"]
+                    # CIE 1937 xy color mode
+                    case "xy":
+                        service_data["xy_color"]    = state.attributes["xy_color"]
             if state.state == "on" or state.state == "off":
                 await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
             else:
