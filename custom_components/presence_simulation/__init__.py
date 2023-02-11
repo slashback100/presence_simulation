@@ -267,12 +267,16 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
 
         for idx, state in enumerate(hist): #hypothsis: states are ordered chronologically
             _LOGGER.debug("State %s", state.as_dict())
-            _LOGGER.debug("Switch of %s foreseen at %s", entity_id, state.last_updated+timedelta(overridden_delta))
+            try:
+                _last_updated = state.last_updated_ts
+            except:
+                _last_updated = state.last_updated
+            _LOGGER.debug("Switch of %s foreseen at %s", entity_id, _last_updated+timedelta(overridden_delta))
             #get the switch entity
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
-            await entity.async_add_next_event(state.last_updated+timedelta(overridden_delta), entity_id, state.state)
+            await entity.async_add_next_event(_last_updated+timedelta(overridden_delta), entity_id, state.state)
 
-            target_time = state.last_updated + timedelta(overridden_delta)
+            target_time = _last_updated + timedelta(overridden_delta)
             # Because we called get_significant_states with include_start_time_state=True
             # the first element in hist should be the state at the start of the
             # simulation (unless HA has restarted recently - see recorder/history.py and RecorderRuns)
@@ -419,7 +423,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         _LOGGER.debug("In restore State Sync")
 
         session = hass.data[DATA_INSTANCE].get_session()
-        result = session.query(States.state, StateAttributes.shared_attrs).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_updated.desc()).limit(1)
+        result = session.query(States.state, StateAttributes.shared_attrs).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_updated_ts.desc()).limit(1)
         if result.count() > 0 and result[0][0] == "on":
           previous_attribute["was_running"] = True
           _LOGGER.debug("Simulation was on before last shutdown, restarting it.")

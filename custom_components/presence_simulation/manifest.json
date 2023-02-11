@@ -5,7 +5,7 @@
   "issue_tracker": "https://github.com/slashback100/presence_simulation/issues",
   "dependencies": ["history", "recorder", "scene"],
   "config_flow": true,
-  "version": "2.2",
+  "version": "2.3",
   "codeowners": [
     "@slashback100"
   ],
