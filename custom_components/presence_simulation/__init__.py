@@ -329,8 +329,18 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
             if "brightness" in state.attributes:
                 _LOGGER.debug("Got attribute brightness: %s", state.attributes["brightness"])
                 service_data["brightness"] = state.attributes["brightness"]
-            if "rgb_color" in state.attributes:
-                service_data["rgb_color"] = state.attributes["rgb_color"]
+            # Preserve accurate color information, where applicable
+            # see https://developers.home-assistant.io/docs/core/entity/light/#color-modes
+            # see https://developers.home-assistant.io/docs/core/entity/light/#turn-on-light-device
+            if "color_mode" in state.attributes:
+                _LOGGER.debug("Got attribute color_mode: %s", state.attributes["color_mode"])
+                color_mode = state.attributes["color_mode"]
+                # color_temp is the only color mode with an attribute that's not color_mode+"_color"
+                if color_mode != "color_temp":
+                    # Attribute color_mode will be xy, hs, rgb...
+                    color_mode = color_mode+"_color"
+                if color_mode in state.attributes:
+                    service_data[color_mode] = state.attributes[color_mode]
             if state.state == "on" or state.state == "off":
                 await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
             else:
