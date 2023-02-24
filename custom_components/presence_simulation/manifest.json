@@ -1,13 +1,13 @@
 {
   "domain": "presence_simulation",
   "name": "Presence Simulation",
-  "documentation": "https://github.com/slashback100/presence_simulation",
-  "issue_tracker": "https://github.com/slashback100/presence_simulation/issues",
-  "dependencies": ["history", "recorder", "scene"],
-  "config_flow": true,
-  "version": "2.4",
   "codeowners": [
     "@slashback100"
   ],
-  "iot_class": "local_polling"
+  "config_flow": true,
+  "dependencies": ["history", "recorder", "scene"],
+  "documentation": "https://github.com/slashback100/presence_simulation",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/slashback100/presence_simulation/issues",
+  "version": "2.4"
 }
