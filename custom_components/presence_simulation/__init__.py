@@ -164,13 +164,6 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         if is_running():
             _LOGGER.warning("Presence simulation already running. Doing nothing")
             return
-        running = True
-        #turn on the switch. Not calling turn_on() to avoid calling the start service again
-        entity.internal_turn_on()
-        _LOGGER.debug("setting restore states %s", overridden_restore)
-        await entity.set_restore_states(overridden_restore)
-        await entity.set_random(overridden_random)
-        _LOGGER.debug("Presence simulation started")
 
         current_date = datetime.now(timezone.utc)
         #compute the start date that will be used in the query to get the historic of the entities
@@ -180,16 +173,25 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
             expanded_entities = await async_expand_entities(overridden_entities)
         except Exception as e:
             _LOGGER.error("Error during identifing entities: "+overridden_entities)
-            running = False
-            entity.internal_turn_off()
             return
 
         if len(expanded_entities) == 0:
             _LOGGER.error("Error during identifing entities, no valid entities has been found")
-            running = False
-            entity.internal_turn_off()
             return
 
+        _LOGGER.debug("setting restore states %s", overridden_restore)
+        await entity.set_restore_states(overridden_restore)
+        await entity.set_random(overridden_random)
+        await entity.set_entities(expanded_entities)
+        await entity.set_delta(overridden_delta)
+        # turn on the switch. Not calling turn_on() to avoid calling the start
+        # service again.  Turn on switch only after setting the important
+        # attributes necessary to restore state upon HA restart, so
+        # we don't end up in a situation in which the simulation is marked
+        # as running, but the necessary attributes aren't set correctly.
+        entity.internal_turn_on()
+        _LOGGER.debug("Presence simulation started")
+        
         if not restart:
             #set attribute on the switch
             try:
@@ -210,8 +212,6 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
                 except Exception as e:
                     _LOGGER.error("Scene could not be created, continue without the restore functionality: %s", e)
 
-        await entity.set_entities(expanded_entities)
-        await entity.set_delta(overridden_delta)
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
         await get_instance(hass).async_add_executor_job(handle_presence_simulation_sync, hass, call, minus_delta, expanded_entities, overridden_delta, overridden_random, entities_after_restart, delta_after_restart)
 
@@ -408,12 +408,19 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
               entities_after_restart = previous_attribute['entity_id'],
               delta_after_restart = previous_attribute["delta"],
               random_after_restart = previous_attribute["random"])
+        else:
+            _LOGGER.debug("Setting switch to off")
+            # Finish initializing switch state
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH]
+            entity.internal_turn_off()
 
     def _restore_state_sync(previous_attribute):
         _LOGGER.debug("In restore State Sync")
 
         session = hass.data[DATA_INSTANCE].get_session()
         result = session.query(States.state, StateAttributes.shared_attrs).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_updated_ts.desc()).limit(1)
+        
+        # result[0] is a tuple of (state, attributes-json)
         if result.count() > 0 and result[0][0] == "on":
           previous_attribute["was_running"] = True
           _LOGGER.debug("Simulation was on before last shutdown, restarting it.")
@@ -427,7 +434,11 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
             previous_attribute['random'] = resultJson['random']
           else:
             previous_attribute['random'] = addRandomTime
-          previous_attribute['entity_id'] = resultJson['entity_id']
+          if 'entity_id' in resultJson:
+              previous_attribute['entity_id'] = resultJson['entity_id']
+          else:
+              _LOGGER.error("In _restore_state_sync, entity_id attribute missing")
+              previous_attribute["was_running"] = False
         else:
           previous_attribute["was_running"] = False
 

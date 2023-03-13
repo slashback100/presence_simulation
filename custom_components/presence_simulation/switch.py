@@ -29,35 +29,31 @@ class PresenceSimulationSwitch(SwitchEntity):
     instances = 0
 
     def __init__(self, hass):
-        self.internal_turn_off()
         self.hass = hass
         self.attr={}
         self.attr["friendly_name"] = "Presence Simulation Toggle"
+        self._attr_name = "Presence Simulation"
+        # As HA is starting, we don't know the running state of the simulation
+        # until restore_state() runs.
+        self._attr_available = False
+        # State is represented by _attr_is_on, which is initialzied
+        # to None by homeassistant/helpers/entity.py:ToggleEntity.
+        # State will be initialized when restore_state() runs.
         self._next_events = []
         PresenceSimulationSwitch.instances += 1
 
-    @property
-    def name(self):
-        return "Presence Simulation"
-
-    @property
-    def is_on(self):
-        """Return True if the state is on"""
-        return self._state == "on"
-
-    @property
-    def state(self):
-        """Return the state of the switch"""
-        return self._state
-
     def internal_turn_on(self, **kwargs):
         """Turn on the presence simulation flag. Does not launch the simulation, this is for the calls from the services, to avoid a loop"""
-        self._state = "on"
+        self._attr_available = True
+        self._attr_is_on = True
+        self.async_write_ha_state()
 
     def internal_turn_off(self, **kwargs):
         """Turn off the presence simulation flag. Does not launch the stop simulation service, this is for the calls from the services, to avoid a loop"""
-        self._state = "off"
+        self._attr_available = True
+        self._attr_is_on = False
         self._next_events = []
+        self.async_write_ha_state()
 
     def turn_on(self, **kwargs):
         """Turn on the presence simulation"""
