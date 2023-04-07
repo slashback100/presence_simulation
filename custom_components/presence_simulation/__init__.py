@@ -13,7 +13,7 @@ from homeassistant.components.recorder import get_instance
 import homeassistant.util.dt as dt_util
 from homeassistant.const import EVENT_HOMEASSISTANT_START
 try:
-    from homeassistant.components.recorder.db_schema import States, StateAttributes
+    from homeassistant.components.recorder.db_schema import States, StateAttributes, StatesMeta
 except ImportError:
     from homeassistant.components.recorder.models import States, StateAttributes
 from homeassistant.components.recorder.const import DATA_INSTANCE
@@ -191,7 +191,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         # as running, but the necessary attributes aren't set correctly.
         entity.internal_turn_on()
         _LOGGER.debug("Presence simulation started")
-        
+
         if not restart:
             #set attribute on the switch
             try:
@@ -418,8 +418,8 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         _LOGGER.debug("In restore State Sync")
 
         session = hass.data[DATA_INSTANCE].get_session()
-        result = session.query(States.state, StateAttributes.shared_attrs).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_updated_ts.desc()).limit(1)
-        
+        result = session.query(States.state, StateAttributes.shared_attrs).join(StatesMeta).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.metadata_id == StatesMeta.metadata_id).filter(StatesMeta.entity_id == SWITCH_PLATFORM+"."+SWITCH).order_by(States.last_updated_ts.desc()).limit(1)
+
         # result[0] is a tuple of (state, attributes-json)
         if result.count() > 0 and result[0][0] == "on":
           previous_attribute["was_running"] = True
