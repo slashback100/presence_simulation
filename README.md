@@ -37,7 +37,7 @@ The `history` integration must be activated - [which it is by default](https://w
 NB: it can also be added as a custom repository if you have an issue with above procedure
 
 # Configuration
-* In the UI, go in Configuration > Integration
+* In the UI, go in Configuration > Integration (or click here [![Open your Home Assistant instance and show your integrations.](https://my.home-assistant.io/badges/integrations.svg)](https://my.home-assistant.io/redirect/integrations/)) 
 * Click on the '+' button
 * Search for "Presence Simulation"
 * Confirm:
