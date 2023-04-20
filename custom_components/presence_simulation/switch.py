@@ -120,11 +120,7 @@ class PresenceSimulationSwitch(SwitchEntity):
 
     async def async_remove_event(self, entity_id):
         """Remove the next event of an entity"""
-        i=0
-        for e in self._next_events:
-            if e[1] == entity_id:
-                del self._next_events[i]
-            i += 1
+        self._next_events = [e for e in self._next_events if e[1] != entity_id]
 
     async def set_start_datetime(self, start_datetime):
         self.attr["simulation_start"] = start_datetime
