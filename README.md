@@ -30,7 +30,7 @@ The `history` integration must be activated - [which it is by default](https://w
 - Restart Home Assistant
 ## Option 3 (recommended)
 - Have [HACS](https://hacs.xyz/) installed, this will allow you to easily manage and track updates.
-- Search for "Presence Simulation".
+- You can either search for "Presence Simulation" or use this link [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=presence_simulation&category=Integration&owner=slashback100).
 - Click Install below the found integration.
 - Restart Home Assistant
 
