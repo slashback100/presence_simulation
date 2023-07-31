@@ -1,4 +1,5 @@
 start:
+  name: Presence simulation start
   description: Start the presence simulation
   fields:
     entity_id:
@@ -16,5 +17,7 @@ start:
       example: 300
 stop:
   description: Stop the presence simulation
+  name: Presence simulation stop
 toggle:
   description: Toggle the presence simulation
+  name: Presence simulation toggle
