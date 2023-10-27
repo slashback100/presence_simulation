@@ -81,6 +81,7 @@ The service `presence_simulation.toggle` will start or stop the simulation, depe
 
 # Tutorials
 Tristan's Smartes Heim creates a german video how to use it: https://youtu.be/5vCp3iKZb4Q
+Smart Home Junkie's English tutorial: https://youtu.be/OTQu3BMr3EU
 
 # Buy me a coffee
 Liked some of my work? Buy me a coffee (or more likely a beer)
