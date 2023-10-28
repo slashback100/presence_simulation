@@ -20,6 +20,10 @@ Supported entities domains:
 # Pre-requisit
 The `history` integration must be activated - [which it is by default](https://www.home-assistant.io/integrations/history/). The period kept in the DB should be bigger than the delta used in the simulation. The default number of days kept is 10 and this [can be configured](https://www.home-assistant.io/integrations/recorder/) with the `recorder` integration.
 
+# Tutorials
+- Smart Home Junkie's English tutorial: https://youtu.be/OTQu3BMr3EU
+- Tristan's Smartes Heim's German tutorial: https://youtu.be/5vCp3iKZb4Q
+
 # Installation
 ## Option 1
 - In your Home Assistant configuration directory (`~/.homeassistant` for instance), create a directory `custom_components/presence_simulation` and put the code in it.
@@ -79,9 +83,6 @@ The service `presence_simulation.stop` will stop the simulation and set the `swi
 ### Toggle the simulation
 The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `switch.presence_simulation` entity.
 
-# Tutorials
-Tristan's Smartes Heim creates a german video how to use it: https://youtu.be/5vCp3iKZb4Q
-Smart Home Junkie's English tutorial: https://youtu.be/OTQu3BMr3EU
 
 # Buy me a coffee
 Liked some of my work? Buy me a coffee (or more likely a beer)
