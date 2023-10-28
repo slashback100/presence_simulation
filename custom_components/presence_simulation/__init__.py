@@ -485,6 +485,6 @@ async def async_migrate_entry(hass, config_entry) -> bool:
     if config_entry.version == 1:
         new = {**config_entry.data}
         new["switch"] = "Presence simulation"
-        hass.config_entries.async_update_entry(config_entry, data=new)
         config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new)
     return True
