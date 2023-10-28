@@ -2,6 +2,7 @@
 from homeassistant.components.switch import SwitchEntity
 from datetime import datetime, timezone, timedelta
 import math
+import re
 import logging
 import pytz
 from .const import (
@@ -16,24 +17,24 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_platform(hass, _, async_add_entities, discovery_info=None):
     """Create presence simulation entity defined in YAML and add them to HA."""
     _LOGGER.debug("async_setup_platform")
-    if PresenceSimulationSwitch.instances == 0:
-        async_add_entities([PresenceSimulationSwitch(hass)], True)
+    async_add_entities([PresenceSimulationSwitch(hass)], True)
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     _LOGGER.debug("async_setup_entry")
     """Create presence simulation entities defined in config_flow and add them to HA."""
-    if PresenceSimulationSwitch.instances == 0:
-        async_add_devices([PresenceSimulationSwitch(hass)], True)
+    async_add_devices([PresenceSimulationSwitch(hass, config_entry)], True)
 
 class PresenceSimulationSwitch(SwitchEntity):
-    instances = 0
 
-    def __init__(self, hass):
+    def __init__(self, hass, config=None):
+        _LOGGER.debug("In init of switch")
+        _LOGGER.debug("Config %s", config.data["switch"])
+
         self.hass = hass
         self.attr={}
-        self.attr["friendly_name"] = "Presence Simulation Toggle"
-        self._attr_name = "Presence Simulation"
+        self._attr_name = config.data["switch"]
+        self.attr["friendly_name"] =  config.data["switch"] + " Toggle"
         # As HA is starting, we don't know the running state of the simulation
         # until restore_state() runs.
         self._attr_available = False
@@ -41,11 +42,13 @@ class PresenceSimulationSwitch(SwitchEntity):
         # to None by homeassistant/helpers/entity.py:ToggleEntity.
         # State will be initialized when restore_state() runs.
         self._next_events = []
-        PresenceSimulationSwitch.instances += 1
+        self.id = SWITCH_PLATFORM+"."+re.sub("[^0-9a-zA-Z]", "_", config.data["switch"].lower())
+
+        _LOGGER.debug("In init of switch - end")
 
     @property
     def unique_id(self):
-      return UNIQUE_ID
+      return self.id #UNIQUE_ID + "_" + str(self.instance)
 
     def internal_turn_on(self, **kwargs):
         """Turn on the presence simulation flag. Does not launch the simulation, this is for the calls from the services, to avoid a loop"""
@@ -63,12 +66,12 @@ class PresenceSimulationSwitch(SwitchEntity):
     def turn_on(self, **kwargs):
         """Turn on the presence simulation"""
         _LOGGER.debug("Turn on of the presence simulation through the switch")
-        self.hass.services.call(DOMAIN, "start")
+        self.hass.services.call(DOMAIN, "start", {"switch_id": self.id})
 
     def turn_off(self, **kwargs):
         """Turn off the presence simulation"""
         _LOGGER.debug("Turn off of the presence simulation through the switch")
-        self.hass.services.call(DOMAIN, "stop")
+        self.hass.services.call(DOMAIN, "stop", {"switch_id": self.id})
 
     async def async_update(self):
         """Update the attributes in regards to the list of next events"""
@@ -115,7 +118,9 @@ class PresenceSimulationSwitch(SwitchEntity):
             self.hass.data[DOMAIN] = {}
         if SWITCH_PLATFORM not in self.hass.data[DOMAIN]:
             self.hass.data[DOMAIN][SWITCH_PLATFORM] = {}
-        self.hass.data[DOMAIN][SWITCH_PLATFORM][SWITCH] = self
+
+        _LOGGER.debug("Adding %s to %s", self.id, SWITCH_PLATFORM)
+        self.hass.data[DOMAIN][SWITCH_PLATFORM][self.id] = self
 
     async def async_add_next_event(self, next_datetime, entity_id, state):
         """Add the next event in the the events list and sort them"""
