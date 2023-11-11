@@ -340,7 +340,7 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
                 _LOGGER.debug("Got attribute color_mode: %s", state.attributes["color_mode"])
                 color_mode = state.attributes["color_mode"]
                 # color_temp is the only color mode with an attribute that's not color_mode+"_color"
-                if color_mode != "color_temp":
+                if color_mode != "color_temp" and color_mode != None:
                     # Attribute color_mode will be xy, hs, rgb...
                     color_mode = color_mode+"_color"
                 if color_mode in state.attributes:
