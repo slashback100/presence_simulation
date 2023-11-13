@@ -1,0 +1,31 @@
+{
+    "title": "Simulácia prítomnosti",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Konfigurácia",
+                "data": {
+                    "entities": "Entita alebo skupina entít",
+                    "delta": "Delta (v dňoch)",
+                    "interval": "Interval obnovenia (v sekundách)",
+                    "restore": "Obnovenie stavu po simulácii",
+                    "random": "Pridajte náhodný čas na prepínanie entít. Tento parameter definuje maximálny čas v sekundách"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Konfigurácia",
+                "data": {
+                    "entities": "Entity or group of entities",
+                    "delta": "Delta (v dňoch)",
+                    "interval": "Interval obnovenia (v sekundách)",
+                    "restore": "Obnovenie stavu po simulácii",
+                    "random": "Pridajte náhodný čas na prepínanie entít. Tento parameter definuje maximálny čas v sekundách"
+                }
+            }
+        }
+    }
+}
