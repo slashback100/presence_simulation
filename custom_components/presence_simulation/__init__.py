@@ -330,13 +330,13 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         if domain == "light":
             #if it is a light, checking the brigthness & color
             _LOGGER.debug("Switching light %s to %s", entity_id, state.state)
-            if "brightness" in state.attributes:
+            if "brightness" in state.attributes and state.attributes["brightness"] is not None:
                 _LOGGER.debug("Got attribute brightness: %s", state.attributes["brightness"])
                 service_data["brightness"] = state.attributes["brightness"]
             # Preserve accurate color information, where applicable
             # see https://developers.home-assistant.io/docs/core/entity/light/#color-modes
             # see https://developers.home-assistant.io/docs/core/entity/light/#turn-on-light-device
-            if "color_mode" in state.attributes:
+            if "color_mode" in state.attributes and state.attributes["color_mode"] is not None:
                 _LOGGER.debug("Got attribute color_mode: %s", state.attributes["color_mode"])
                 color_mode = state.attributes["color_mode"]
                 # color_temp is the only color mode with an attribute that's not color_mode+"_color"
