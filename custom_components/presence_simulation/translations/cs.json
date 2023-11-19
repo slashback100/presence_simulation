@@ -1,0 +1,31 @@
+{
+    "title": "Předstírání přítomnosti",
+    "config": {
+        "step": {
+            "user":{
+                "description": "Nastavení",
+                "data": {
+                    "entities": "Entita nebo skupina entit",
+                    "delta": "Delta (ve dnech)",
+                    "interval": "Prodleva obnovení (v sekundách)",
+                    "restore": "Obnovit stav po předstírání",
+                    "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init":{
+                "description": "Nastavení",
+                "data": {
+                    "entities": "Entita nebo skupina entit",
+                    "delta": "Delta (ve dnech)",
+                    "interval": "Prodleva obnovení (v sekundách)",
+                    "restore": "Obnovit stav po předstírání",
+                    "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách"
+                }
+            }
+        }
+    }
+}
