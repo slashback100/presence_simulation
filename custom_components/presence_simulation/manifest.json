@@ -9,5 +9,5 @@
   "documentation": "https://github.com/slashback100/presence_simulation",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/slashback100/presence_simulation/issues",
-  "version": "3.3"
+  "version": "3.4"
 }

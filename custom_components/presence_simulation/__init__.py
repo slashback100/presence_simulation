@@ -216,9 +216,20 @@ async def async_mysetup(hass, entities, deltaStr, refreshInterval, restoreParam,
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
         await get_instance(hass).async_add_executor_job(handle_presence_simulation_sync, hass, call, minus_delta, expanded_entities, overridden_delta, overridden_random, entities_after_restart, delta_after_restart)
 
+    def filter_out_undefined(dic):
+        for hist in dic: #iterate on the entitied
+            #for idx, state in enumerate(dic[hist].copy()): #iterate on the historic
+            for state in dic[hist].copy(): #iterate on the historic
+                if state.state in ["undefined", "unavailable", "unknown"] :
+                    _LOGGER.debug('Deleting state')
+                    dic[hist].remove(state)
+            #dic[hist] = list(filter(lambda x : x.state not in ["undefined", "unavailable", "unknown"], dic[hist]))
+        return dic
     def handle_presence_simulation_sync(hass, call, minus_delta, expanded_entities, overridden_delta, overridden_random, entities_after_restart, delta_after_restart):
         dic = get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, include_start_time_state=True, significant_changes_only=False)
         _LOGGER.debug("history: %s", dic)
+        dic = filter_out_undefined(dic)
+        _LOGGER.debug("history after filtering: %s", dic)
         # handle_presence_simulation_sync is called from async_add_executor_job,
         # so may not be running in the event loop, so we can't call hass.async_create_task.
         # instead calling hass.create_task, which is thread_safe.
