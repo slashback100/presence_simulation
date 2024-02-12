@@ -50,7 +50,7 @@ NB: it can also be added as a custom repository if you have an issue with above 
   <img src="https://github.com/slashback100/presence_simulation/raw/main/custom_components/presence_simulation/images/configFlow.png" alt="accessibility text">
 </p>
 
-* Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups, media_player or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`. You can also setup several entities, separated with ','
+* Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups, media_player or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`. You can also setup several entities, separated with ','. If you use a group, the simulation will act on each entity of the group independently. 
 * Set the number of days of history the simulation will use (the delta)
 * Set the poll interval in seconds that determines how quickly the simulation notices that it has been requested to stop. Default is 30 seconds. Warning, the smaller the number you choose, the more computing process the component will take.
 * After the simulation, choose to restore the states as they were before the start of ths simulation
