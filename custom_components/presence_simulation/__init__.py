@@ -32,6 +32,7 @@ async def async_setup_entry(hass, entry):
     _LOGGER.debug("async setup entry %s", entry.data["entities"])
     unsub = entry.add_update_listener(update_listener)
 
+    # Add sensor
     # Use `hass.async_create_task` to avoid a circular dependency between the platform and the component
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SWITCH_PLATFORM))
     if 'interval' in entry.data:
@@ -427,10 +428,13 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
               delta_after_restart = previous_attribute["delta"],
               random_after_restart = previous_attribute["random"])
         else:
-            _LOGGER.debug("Setting switch to off")
-            # Finish initializing switch state
+          _LOGGER.debug("Setting switch to off")
+          # Finish initializing switch state
+          if DOMAIN in hass.data:
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
             entity.internal_turn_off()
+          else:
+            _LOGGER.debug(DOMAIN+" is not yet initialized")
 
     def _restore_state_sync(previous_attribute, switch_id):
         _LOGGER.debug("In restore State Sync")

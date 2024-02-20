@@ -1,5 +1,6 @@
 #from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.helpers.restore_state import RestoreEntity
 from datetime import datetime, timezone, timedelta
 import math
 import re
@@ -25,9 +26,10 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
     """Create presence simulation entities defined in config_flow and add them to HA."""
     async_add_devices([PresenceSimulationSwitch(hass, config_entry)], True)
 
-class PresenceSimulationSwitch(SwitchEntity):
+class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
 
     def __init__(self, hass, config=None):
+        self.config = config
         _LOGGER.debug("In init of switch")
         _LOGGER.debug("Config %s", config.data["switch"])
 
@@ -74,8 +76,10 @@ class PresenceSimulationSwitch(SwitchEntity):
         self.hass.services.call(DOMAIN, "stop", {"switch_id": self.id})
 
     async def async_update(self):
+        _LOGGER.debug("in switch async_update")
         """Update the attributes in regards to the list of next events"""
         if len(self._next_events) > 0:
+            _LOGGER.debug("next event > 0")
             self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = self._next_events[0] #list is sorted
             try:
                 self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(self.hass.config.time_zone).strftime("%d/%m/%Y %H:%M:%S")
@@ -85,9 +89,12 @@ class PresenceSimulationSwitch(SwitchEntity):
                 except Exception as e:
                     _LOGGER.warning("Exception while trying to convert utc to local time: %s",e)
         else:
+            _LOGGER.debug("next event <= 0")
+            _LOGGER.debug(self._next_events)
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
                 if prop in self.attr:
                     del self.attr[prop]
+            _LOGGER.debug("end of async update")
 
     def update(self):
         """Update the attributes in regards to the list of next events"""
@@ -119,8 +126,17 @@ class PresenceSimulationSwitch(SwitchEntity):
         if SWITCH_PLATFORM not in self.hass.data[DOMAIN]:
             self.hass.data[DOMAIN][SWITCH_PLATFORM] = {}
 
+        #restore stored state
         _LOGGER.debug("Adding %s to %s", self.id, SWITCH_PLATFORM)
         self.hass.data[DOMAIN][SWITCH_PLATFORM][self.id] = self
+        if(state := await self.async_get_last_state()) is not None:
+          _LOGGER.debug("restore stored state")
+          self.internal_turn_on()
+          _LOGGER.debug(state)
+        else:
+          self.internal_turn_off()
+          #to do
+
 
     async def async_add_next_event(self, next_datetime, entity_id, state):
         """Add the next event in the the events list and sort them"""
