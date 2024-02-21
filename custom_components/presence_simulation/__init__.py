@@ -12,7 +12,7 @@ from datetime import datetime,timedelta,timezone
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.components.recorder import get_instance
 import homeassistant.util.dt as dt_util
-from homeassistant.const import EVENT_HOMEASSISTANT_START
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 try:
     from homeassistant.components.recorder.db_schema import States, StateAttributes, StatesMeta
 except ImportError:
@@ -397,77 +397,20 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
         return entity.is_on
 
     async def launch_simulation_after_restart(call):
-        for switch in hass.data[DOMAIN][SWITCH_PLATFORM]:
-            _LOGGER.debug("switch is %s", switch.unique_id())
-            #if the switch was on before previous restart
-            if switch.is_on:
-                _LOGGER.debug("Relaunching simulation %s", switch.unique_id())
-                #turn the internal flag to off in order to be able to call the turn on service
-                await switch.internal_turn_off()
-                await switch.turn_on()
-
-    # not used anymore
-    async def restore_state(call):
-        """Restore states."""
-        _LOGGER.debug("Restoring states after HA start")
-        switch_id = SWITCH_PLATFORM+"."+re.sub("[^0-9a-zA-Z]", "_", switch.lower())
-        _LOGGER.debug("restore_state call: %s", call.as_dict())
-        _LOGGER.debug("restore_state switch_id: %s", switch_id)
-        """ retrieve the last status after last shutdown and restore it """
-        previous_attribute = {}
-        await get_instance(hass).async_add_executor_job(_restore_state_sync, previous_attribute, switch_id)
-
-        _LOGGER.debug("Previous attribute is "+json.dumps(previous_attribute))
-        if previous_attribute["was_running"]:
-          # do not try to restore the previous state after the restart cause the scene has been lost during the restart
-          await handle_presence_simulation(call = None,
-              entities_after_restart = previous_attribute['entity_id'],
-              delta_after_restart = previous_attribute["delta"],
-              random_after_restart = previous_attribute["random"])
-        else:
-          _LOGGER.debug("Setting switch to off")
-          # Finish initializing switch state
-          if DOMAIN in hass.data:
+        for switch_id in hass.data[DOMAIN][SWITCH_PLATFORM]:
+            _LOGGER.debug("switch is %s", switch_id)
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
-            entity.internal_turn_off()
-          else:
-            _LOGGER.debug(DOMAIN+" is not yet initialized")
-
-    # not used anymore
-    def _restore_state_sync(previous_attribute, switch_id):
-        _LOGGER.debug("In restore State Sync")
-
-        session = hass.data[DATA_INSTANCE].get_session()
-        result = session.query(States.state, StateAttributes.shared_attrs).join(StatesMeta).filter(States.attributes_id == StateAttributes.attributes_id).filter(States.metadata_id == StatesMeta.metadata_id).filter(StatesMeta.entity_id == switch_id).order_by(States.last_updated_ts.desc()).limit(1)
-
-        # result[0] is a tuple of (state, attributes-json)
-        if result.count() > 0 and result[0][0] == "on":
-          previous_attribute["was_running"] = True
-          _LOGGER.debug("Simulation was on before last shutdown, restarting it.")
-
-          resultJson = json.loads(result[0][1])
-          if 'delta' in resultJson:
-            previous_attribute['delta'] = resultJson['delta']
-          else:
-            previous_attribute['delta'] = delta
-          if 'random' in resultJson:
-            previous_attribute['random'] = resultJson['random']
-          else:
-            previous_attribute['random'] = addRandomTime
-          if 'entity_id' in resultJson:
-              previous_attribute['entity_id'] = resultJson['entity_id']
-          else:
-              _LOGGER.error("In _restore_state_sync, entity_id attribute missing")
-              previous_attribute["was_running"] = False
-        else:
-          previous_attribute["was_running"] = False
+            #if the switch was on before previous restart
+            if entity.is_on:
+                _LOGGER.debug("Relaunching simulation %s", switch_id)
+                #turn the internal flag to off in order to be able to call the turn on service
+                entity.internal_turn_off()
+                await entity.turn_on_async()
 
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
     hass.services.async_register(DOMAIN, "toggle", handle_toggle_presence_simulation)
-    #hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, restore_state)
-    #above is replaced by RestoreEntity feature
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, launch_simulation_after_restart)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, launch_simulation_after_restart)
 
     return True
 

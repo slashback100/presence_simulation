@@ -77,6 +77,11 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._next_events = []
         self.async_write_ha_state()
 
+    async def turn_on_async(self, **kwargs):
+        """Turn on the presence simulation"""
+        _LOGGER.debug("Turn on of the presence simulation through the switch")
+        await self.hass.services.async_call(DOMAIN, "start", {"switch_id": self.id, "internal": True})
+
     def turn_on(self, **kwargs):
         """Turn on the presence simulation"""
         _LOGGER.debug("Turn on of the presence simulation through the switch")
@@ -184,22 +189,21 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self.hass.data[DOMAIN][SWITCH_PLATFORM][self.id] = self
         if(state := await self.async_get_last_state()) is not None:
             _LOGGER.debug("restore stored state")
-            _LOGGER.debug(state)
             if state.state == "on":
-                self._entities = state.attributes["entity_id"]
-                self._random = state.attributes["random"]
-                #self._interval = state.attributes["interval"]
-                self._delta = state.attributes["delta"]
-                self._restore = state.attributes["restore_states"]
-                self.reset_default_values()
-                #cause HA to crash when starting
-                #self.turn_on()
+                if "entity_id" in state.attributes:
+                    self._entities_overriden = state.attributes["entity_id"]
+                if "random" in state.attributes:
+                    self._random_overriden = state.attributes["random"]
+                if "delta" in state.attributes:
+                    self._delta_overriden = state.attributes["delta"]
+                if "restore_sated" in state.attributes:
+                    self._restore_overriden = state.attributes["restore_states"]
+                #just set internally to on, the simulation service will be called later once the HA Start event is fired
                 self.internal_turn_on()
             else:
                 self.internal_turn_off()
         else:
           self.internal_turn_off()
-          #to do
 
 
     async def async_add_next_event(self, next_datetime, entity_id, state):
@@ -214,10 +218,6 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
 
     async def set_start_datetime(self, start_datetime):
         self.attr["simulation_start"] = start_datetime
-
-    #not possible to override this value
-    #async def set_interval(self, interval):
-    #    self._interval_overriden = interval
 
     async def set_delta(self, delta):
         self.attr["delta"] = delta
