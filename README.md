@@ -58,6 +58,8 @@ NB: it can also be added as a custom repository if you have an issue with above 
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
+*New in version 4.0* You can create several presence simulation switches, associate them to different configurations (entities, random feature...) and turn them on and off independently. 
+
 # Use it
 
 The component will create an entity called `switch.presence_simulation`. This entity will be set to `on` when the simulation is running. `off` otherwise.
@@ -86,6 +88,10 @@ The service `presence_simulation.toggle` will start or stop the simulation, depe
 # Event
 
 Each time the simulation calls a service (turn on a light, open a cover, ...), an event `presence_simulation_change` is triggerd. You can catch this event in an automation, to notify you for instance. 
+
+# Breaking Change in v4.0
+
+Due to the new feature of the v4 consisting in having multiple presence simulation switches, the id of the existing switch will be changed, which will cause Home Assistant to create a new switch (`switch.presence_simulation_2`).
 
 # Buy me a coffee
 Liked some of my work? Buy me a coffee (or more likely a beer)
