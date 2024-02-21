@@ -2,6 +2,11 @@ start:
   name: Presence simulation start
   description: Start the presence simulation
   fields:
+    switch_id:
+      name: The id of the presence simulation switch
+      description: The id of the presence simulation switch
+      example: >
+            - presence_simulation.presence_simulation_2
     entity_id:
       name: Entities list
       description: The list of entities to use by the presence simulation to override the list configured in the component
@@ -22,6 +27,18 @@ start:
 stop:
   description: Stop the presence simulation
   name: Presence simulation stop
+  fields:
+    switch_id:
+      name: The id of the presence simulation switch
+      description: The id of the presence simulation switch
+      example: >
+            - presence_simulation.presence_simulation_2
 toggle:
   description: Toggle the presence simulation
   name: Presence simulation toggle
+  fields:
+    switch_id:
+      name: The id of the presence simulation switch
+      description: The id of the presence simulation switch
+      example: >
+            - presence_simulation.presence_simulation_2

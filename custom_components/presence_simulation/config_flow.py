@@ -7,7 +7,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Example config flow."""
-    VERSION = 1
+    VERSION = 2
     data = None
     async def async_create_flow(handler, context, data):
             """Create flow."""
@@ -15,6 +15,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             """Finish flow."""
     async def async_step_user(self, info=None):
         data_schema = {
+            vol.Required("switch", default="Presence simulation"): str,
             vol.Required("entities"): str,
             vol.Required("delta", default=7): int,
             vol.Required("interval", default=30): int,
@@ -44,6 +45,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.debug("entry %s", entry)
         return OptionsFlowHandler(entry)
 
+
 class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry):
         self.config_entry = config_entry
@@ -64,6 +66,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 random = 0
 
             data_schema = {
+                vol.Required("switch", default=self.config_entry.data["switch"]): str,
                 vol.Required("entities", default=self.config_entry.data["entities"]): str,
                 vol.Required("delta", default=self.config_entry.data["delta"]): int,
                 vol.Required("interval", default=interval): int,
