@@ -113,11 +113,9 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
         """Stop the presence simulation"""
         _LOGGER.debug("Stopped presence simulation")
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
-            overridden_switch_id = call.data.get("switch_id")
-        else:
-            overridden_switch_id = switch_id
+            switch_id = call.data.get("switch_id")
 
-        await stop_presence_simulation(restart=restart, switch_id=overridden_switch_id)
+        await stop_presence_simulation(restart=restart, switch_id=switch_id)
 
     async def async_expand_entities(entities):
         """If the entity is a group, return the list of the entities within, otherwise, return the entity"""
@@ -141,60 +139,49 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
                     entities_new.append(entity)
         return entities_new
 
-    async def handle_presence_simulation(call, restart=False, entities_after_restart=None, delta_after_restart=None, random_after_restart=None, switch_id=None):
+    async def handle_presence_simulation(call, restart=False, switch_id=None):
         """Start the presence simulation"""
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
-            overridden_switch_id = call.data.get("switch_id")
-            if isinstance(call.data.get("entity_id", entities), list):
-                overridden_entities = call.data.get("entity_id", entities)
-            else:
-                overridden_entities = [call.data.get("entity_id", entities)]
-            overridden_delta = call.data.get("delta", delta)
-            overridden_restore = call.data.get("restore_states", restoreAfterStop)
-            overridden_random = call.data.get("random", addRandomTime)
+            #get the switch entity
+            switch_id = call.data.get("switch_id")
+            #internal = ("internal" in call.data) and call.data.get("internal")
+            internal = call.data.get("internal", False) and call.data.get("internal")
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+            if not is_running(switch_id) and not internal:
+                if isinstance(call.data.get("entity_id"), list):
+                    await entity.set_entities(call.data.get("entity_id"))
+                else:
+                    await entity.set_entities([call.data.get("entity_id")])
+                await entity.set_delta(call.data.get("delta", 7))
+                await entity.set_restore(call.data.get("restore_states", False))
+                await entity.set_random(call.data.get("random", 0))
         else: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
               # or this is a restart and the simulation was launched after a restart of HA
-            if entities_after_restart is not None:
-                overridden_entities = entities_after_restart
-            else:
-                overridden_entities = entities
-            if delta_after_restart is not None:
-                overridden_delta = delta_after_restart
-            else:
-                overridden_delta = delta
-            if random_after_restart is not None:
-                overridden_random = random_after_restart
-            else:
-                overridden_random = addRandomTime
-            overridden_restore = restoreAfterStop
-            overridden_switch_id = switch_id
+            #get the switch entity
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+            #make sure the initial config of the simulation is used
+            await entity.reset_default_values_async()
 
-        #get the switch entity
-        entity = hass.data[DOMAIN][SWITCH_PLATFORM][overridden_switch_id]
+        _LOGGER.debug("Switch id %s", switch_id)
         _LOGGER.debug("Is already running ? %s", entity.state)
-        if is_running(overridden_switch_id):
+        if is_running(switch_id):
             _LOGGER.warning("Presence simulation already running. Doing nothing")
             return
 
         current_date = datetime.now(timezone.utc)
         #compute the start date that will be used in the query to get the historic of the entities
-        minus_delta = current_date + timedelta(-overridden_delta)
+        minus_delta = current_date + timedelta(- entity.delta)
         #expand the entities, meaning replace the groups with the entities in it
         try:
-            expanded_entities = await async_expand_entities(overridden_entities)
+            expanded_entities = await async_expand_entities(entity.entities)
         except Exception as e:
-            _LOGGER.error("Error during identifing entities: "+overridden_entities)
+            _LOGGER.error("Error during identifing entities: "+entity.entities)
             return
 
         if len(expanded_entities) == 0:
             _LOGGER.error("Error during identifing entities, no valid entities has been found")
             return
 
-        _LOGGER.debug("setting restore states %s", overridden_restore)
-        await entity.set_restore_states(overridden_restore)
-        await entity.set_random(overridden_random)
-        await entity.set_entities(expanded_entities)
-        await entity.set_delta(overridden_delta)
         # turn on the switch. Not calling turn_on() to avoid calling the start
         # service again.  Turn on switch only after setting the important
         # attributes necessary to restore state upon HA restart, so
@@ -213,9 +200,9 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
                 except Exception as e:
                     _LOGGER.warning("Start datetime could not be set to HA timezone: ", e)
                     await entity.set_start_datetime(datetime.now())
-            if overridden_restore:
+            if entity.restore:
                 service_data = {}
-                service_data["scene_id"] = overridden_switch_id.replace(".", "_")+"_"+RESTORE_SCENE
+                service_data["scene_id"] = switch_id.replace(".", "_")+"_"+RESTORE_SCENE
                 service_data["snapshot_entities"] = expanded_entities
                 _LOGGER.debug("Saving scene before launching the simulation")
                 try:
@@ -224,22 +211,23 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
                     _LOGGER.error("Scene could not be created, continue without the restore functionality: %s", e)
 
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
-        await get_instance(hass).async_add_executor_job(handle_presence_simulation_sync, hass, call, minus_delta, expanded_entities, overridden_delta, overridden_random, entities_after_restart, delta_after_restart, overridden_switch_id)
+        await get_instance(hass).async_add_executor_job(handle_presence_simulation_sync, hass, call, minus_delta, expanded_entities, switch_id)
 
-    def handle_presence_simulation_sync(hass, call, minus_delta, expanded_entities, overridden_delta, overridden_random, entities_after_restart, delta_after_restart, switch_id):
+    def handle_presence_simulation_sync(hass, call, minus_delta, expanded_entities, switch_id):
         dic = get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, include_start_time_state=True, significant_changes_only=False)
         _LOGGER.debug("history: %s", dic)
         # handle_presence_simulation_sync is called from async_add_executor_job,
         # so may not be running in the event loop, so we can't call hass.async_create_task.
         # instead calling hass.create_task, which is thread_safe.
         # See homeassistant/core.py:create_task
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
         for entity_id in dic:
             _LOGGER.debug('Entity %s', entity_id)
             #launch an async task by entity_id
-            hass.create_task(simulate_single_entity(switch_id, entity_id, dic[entity_id], overridden_delta, overridden_random))
+            hass.create_task(simulate_single_entity(switch_id, entity_id, dic[entity_id], entity.delta, entity.random))
 
         #launch an async task that will restart the simulation after the delay has passed
-        hass.create_task(restart_presence_simulation(call, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart, random_after_restart=overridden_random, switch_id=switch_id))
+        hass.create_task(restart_presence_simulation(call, switch_id=switch_id))
         _LOGGER.debug("All async tasks launched")
 
 
@@ -251,32 +239,30 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
             await handle_presence_simulation(call, restart=False)
 
 
-    async def restart_presence_simulation(call, entities_after_restart=None, delta_after_restart=None, random_after_restart=None, switch_id=None):
+    async def restart_presence_simulation(call, switch_id=None):
         """Make sure that once _delta_ days is passed, relaunch the presence simulation for another _delta_ days"""
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
-            overridden_delta = call.data.get("delta", delta)
-            overridden_switch_id = call.data.get("switch_id")
+            switch_id = call.data.get("switch_id")
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+            await entity.set_delta(call.data.get("delta", delta))
         else:
-            if delta_after_restart is None:
-                overridden_delta = delta
-            else:
-                overridden_delta = delta_after_restart
-            overridden_switch_id = switch_id
-        _LOGGER.debug("Presence simulation will be relaunched in %i days", overridden_delta)
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+            await entity.reset_default_values_async()
+        _LOGGER.debug("Presence simulation will be relaunched in %i days", entity.delta)
         #compute the moment the presence simulation will have to be restarted
-        start_plus_delta = datetime.now(timezone.utc) + timedelta(overridden_delta)
-        while is_running(overridden_switch_id):
+        start_plus_delta = datetime.now(timezone.utc) + timedelta(entity.delta)
+        while is_running(switch_id):
             #sleep until the 'delay' is passed
             secs_left = (start_plus_delta - datetime.now(timezone.utc)).total_seconds()
             if secs_left <= 0:
                 break
             await asyncio.sleep(min(secs_left, interval))
 
-        if is_running(overridden_switch_id):
-            _LOGGER.debug("%s has passed, presence simulation is relaunched", overridden_delta)
+        if is_running(switch_id):
+            _LOGGER.debug("%s has passed, presence simulation is relaunched", entity.delta)
             #Call to stop needed to avoid the start to do nothing since already running
-            await handle_stop_presence_simulation(call, restart=True, switch_id=overridden_switch_id)
-            await handle_presence_simulation(call, restart=True, entities_after_restart=entities_after_restart, delta_after_restart=delta_after_restart, random_after_restart=random_after_restart, switch_id=overridden_switch_id)
+            await handle_stop_presence_simulation(call, restart=True, switch_id=switch_id)
+            await handle_presence_simulation(call, restart=True, switch_id=switch_id)
 
     async def simulate_single_entity(switch_id, entity_id, hist, overridden_delta, overridden_random):
         """This method will replay the historic of one entity received in parameter"""
@@ -410,6 +396,17 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
         return entity.is_on
 
+    async def launch_simulation_after_restart(call):
+        for switch in hass.data[DOMAIN][SWITCH_PLATFORM]:
+            _LOGGER.debug("switch is %s", switch.unique_id())
+            #if the switch was on before previous restart
+            if switch.is_on:
+                _LOGGER.debug("Relaunching simulation %s", switch.unique_id())
+                #turn the internal flag to off in order to be able to call the turn on service
+                await switch.internal_turn_off()
+                await switch.turn_on()
+
+    # not used anymore
     async def restore_state(call):
         """Restore states."""
         _LOGGER.debug("Restoring states after HA start")
@@ -436,6 +433,7 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
           else:
             _LOGGER.debug(DOMAIN+" is not yet initialized")
 
+    # not used anymore
     def _restore_state_sync(previous_attribute, switch_id):
         _LOGGER.debug("In restore State Sync")
 
@@ -467,7 +465,9 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
     hass.services.async_register(DOMAIN, "toggle", handle_toggle_presence_simulation)
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, restore_state)
+    #hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, restore_state)
+    #above is replaced by RestoreEntity feature
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, launch_simulation_after_restart)
 
     return True
 
