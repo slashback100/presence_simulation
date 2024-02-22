@@ -15,6 +15,9 @@
         }
     },
     "options": {
+		"error": {
+			"cannot_change_name": "The name of the swtich can't be changed"
+		},
         "step": {
             "init":{
                 "description": "Configuration",

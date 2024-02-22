@@ -51,6 +51,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(self, info=None):
+        errors: Dict[str, str] = {}
         _LOGGER.debug("config flow init %s", info)
 
         if "interval" in self.config_entry.data:
@@ -86,8 +87,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         #if pop-up is saved but the name has changed, log an error and ask again
         if info["switch"] != self.config_entry.data["switch"]:
             _LOGGER.error("Presence Simulation Switch name can't be changed")
+            errors["base"] = "cannot_change_name"
             return self.async_show_form(
-                step_id="init", data_schema=vol.Schema(data_schema)
+                step_id="init", data_schema=vol.Schema(data_schema), errors=errors
             )
 
         return self.async_create_entry(title="Simulation Presence", data=info)
