@@ -23,7 +23,6 @@ async def async_setup_platform(hass, _, async_add_entities, discovery_info=None)
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     _LOGGER.debug("async_setup_entry")
-    _LOGGER.debug("config entry %s", config_entry)
 
     """Create presence simulation entities defined in config_flow and add them to HA."""
     async_add_devices([PresenceSimulationSwitch(hass, config_entry)], True)
@@ -31,19 +30,8 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
 
     def __init__(self, hass, config=None):
-        self.config = config
-        elms = []
-        for elm in config.data["entities"].split(","):
-            elms += [elm.strip()]
-        self._entities = elms
-        self._random = config.data["random"]
-        self._interval = config.data["interval"]
-        self._delta = config.data["delta"]
-        self._restore = config.data["restore"]
-        self.reset_default_values()
         _LOGGER.debug("In init of switch")
-        _LOGGER.debug("Config %s", config.data["switch"])
-        _LOGGER.debug("entities %s", config.data["entities"])
+        self.update_config(config)
 
         self.hass = hass
         self.attr={}
@@ -57,8 +45,21 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         # State will be initialized when restore_state() runs.
         self._next_events = []
         self.id = SWITCH_PLATFORM+"."+re.sub("[^0-9a-zA-Z]", "_", config.data["switch"].lower())
-
         _LOGGER.debug("In init of switch - end")
+
+    def update_config(self, config):
+        _LOGGER.debug("Config %s", config.data["switch"])
+        self.config = config
+        elms = []
+        for elm in config.data["entities"].split(","):
+            elms += [elm.strip()]
+        self._entities = elms
+        self._random = int(config.data["random"])
+        self._interval = int(config.data["interval"])
+        self._delta = config.data["delta"]
+        self._restore = config.data["restore"]
+        self.reset_default_values()
+        _LOGGER.debug("entities %s", config.data["entities"])
 
     @property
     def unique_id(self):
@@ -138,37 +139,20 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         return self._restore_overriden
     @property
     def interval(self):
-        return self._interval_overriden
+        return self._interval
 
     async def reset_default_values_async(self):
         self._entities_overriden = self._entities
         self._random_overriden = self._random
-        self._interval_overriden = self._interval
         self._restore_overriden = self._restore
         self._delta_overriden = self._delta
 
     def reset_default_values(self):
         self._entities_overriden = self._entities
         self._random_overriden = self._random
-        self._interval_overriden = self._interval
         self._restore_overriden = self._restore
         self._delta_overriden = self._delta
 
-    #backward compatibility
-    async def restore_states(self):
-        return self.restore
-        #if 'restore_states' in self.attr:
-        #    return self.attr['restore_states']
-        #else:
-        #    return False
-
-    #backward compatibility
-    async def random(self):
-        return self.random
-        #if 'random' in self.attr:
-        #    return self.attr['random']
-        #else:
-        #    return 0
 
     #def device_state_attributes(self):
     @property
@@ -190,6 +174,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         if(state := await self.async_get_last_state()) is not None:
             _LOGGER.debug("restore stored state")
             if state.state == "on":
+                _LOGGER.debug("State was on")
                 if "entity_id" in state.attributes:
                     self._entities_overriden = state.attributes["entity_id"]
                 if "random" in state.attributes:
@@ -199,8 +184,9 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
                 if "restore_sated" in state.attributes:
                     self._restore_overriden = state.attributes["restore_states"]
                 #just set internally to on, the simulation service will be called later once the HA Start event is fired
-                self.internal_turn_on()
+                await self.turn_on_async()
             else:
+                _LOGGER.debug("State was off")
                 self.internal_turn_off()
         else:
           self.internal_turn_off()
@@ -236,6 +222,8 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self.attr["random"] = random
         self._random_overriden = random
 
+    async def set_interval(self, interval):
+        self._interval = interval
 
 
     async def reset_start_datetime(self):

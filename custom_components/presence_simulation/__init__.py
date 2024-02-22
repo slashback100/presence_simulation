@@ -3,30 +3,30 @@
 import logging
 import time
 import asyncio
-import json
 import pytz
-import random
-import json
 import re
+import random
 from datetime import datetime,timedelta,timezone
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.components.recorder import get_instance
-import homeassistant.util.dt as dt_util
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
-try:
-    from homeassistant.components.recorder.db_schema import States, StateAttributes, StatesMeta
-except ImportError:
-    from homeassistant.components.recorder.models import States, StateAttributes
-from homeassistant.components.recorder.const import DATA_INSTANCE
+from homeassistant.helpers.entity_registry import async_migrate_entries
 from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
         SWITCH,
         RESTORE_SCENE,
         SCENE_PLATFORM,
+        UNIQUE_ID,
         MY_EVENT
 )
 _LOGGER = logging.getLogger(__name__)
+
+async def async_setup(hass, config):
+    """Set up this component using YAML."""
+    if config.get(DOMAIN) is None:
+        # We get here if the integration is set up using config flow
+        return True
 
 async def async_setup_entry(hass, entry):
     """Set up this component using config flow."""
@@ -36,48 +36,8 @@ async def async_setup_entry(hass, entry):
     # Add sensor
     # Use `hass.async_create_task` to avoid a circular dependency between the platform and the component
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SWITCH_PLATFORM))
-    if 'interval' in entry.data:
-        interval = entry.data['interval']
-    else:
-        interval = 30
-    if 'restore' in entry.data:
-        restore = entry.data['restore']
-    else:
-        restore = False
-    if 'random' in entry.data:
-        random = entry.data['random']
-    else:
-        random = 0
-    elms = []
-    for elm in entry.data["entities"].split(","):
-        elms += [elm.strip()]
-    switch = entry.data["switch"]
-    return await async_mysetup(hass, switch, elms, entry.data["delta"], interval, restore, random)
 
-async def async_setup(hass, config):
-    """Set up this component using YAML."""
-    if config.get(DOMAIN) is None:
-        # We get here if the integration is set up using config flow
-        return True
-    return await async_mysetup(hass, config[DOMAIN].get("switch","Presence simulation"), config[DOMAIN].get("entity_id",[]), config[DOMAIN].get('delta', "7"), config[DOMAIN].get('interval', '30'), config[DOMAIN].get('restore', False), config[DOMAIN].get('random', '0'))
-
-
-async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, restoreParam, randomParam):
-    """Set up this component (YAML or UI)."""
-    #delta is the size in days of the historic to get from the DB
-    delta = int(deltaStr)
-    #interval is the number of seconds the component will wait before checking if the entity need to be switch
-    interval = int(refreshInterval)
-    restoreAfterStop = restoreParam
-    addRandomTime = randomParam
     previous_attribute = {}
-    _LOGGER.debug("Config: Switch name: %s", switch)
-    _LOGGER.debug("Config: Entities for presence simulation: %s", entities)
-    _LOGGER.debug("Config: Cycle of %s days", delta)
-    _LOGGER.debug("Config: Scan interval of %s seconds", interval)
-    _LOGGER.debug("Config: Restore state: %s", restoreAfterStop)
-    _LOGGER.debug("Config: Add random time (s): %s", addRandomTime)
-    _LOGGER.debug("Config: Timezone that will be used to display datetime: %s", hass.config.time_zone)
 
     async def stop_presence_simulation(err=None, restart=False, switch_id=None):
         """Stop the presence simulation, raising a potential error"""
@@ -94,9 +54,9 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
             # if the scene exist, turn it on
             # TODO check to improve, won't work if you launch one time is the restore state and then after without it.
             #Can not just take restoreAfterStop cause if it is overriden in the service call, restoreAfterStop is not update
-            _LOGGER.debug("entity.restore_states %s", await entity.restore_states())
+            _LOGGER.debug("entity.restore_states %s", entity.restore)
             scene = hass.states.get(SCENE_PLATFORM+"."+switch_id.replace(".", "_")+"_"+RESTORE_SCENE)
-            if scene is not None and await entity.restore_states():
+            if scene is not None and entity.restore:
                 service_data = {}
                 service_data["entity_id"] = SCENE_PLATFORM+"."+switch_id.replace(".", "_")+"_"+RESTORE_SCENE
                 _LOGGER.debug("Restoring scene after the simulation")
@@ -254,13 +214,13 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
 
     async def restart_presence_simulation(call, switch_id=None):
         """Make sure that once _delta_ days is passed, relaunch the presence simulation for another _delta_ days"""
-        if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
-            switch_id = call.data.get("switch_id")
-            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
-            await entity.set_delta(call.data.get("delta", delta))
-        else:
-            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
-            await entity.reset_default_values_async()
+        #if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
+        #    switch_id = call.data.get("switch_id")
+        #    entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        #    await entity.set_delta(call.data.get("delta", delta))
+        #else:
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        await entity.reset_default_values_async()
         _LOGGER.debug("Presence simulation will be relaunched in %i days", entity.delta)
         #compute the moment the presence simulation will have to be restarted
         start_plus_delta = datetime.now(timezone.utc) + timedelta(entity.delta)
@@ -269,7 +229,7 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
             secs_left = (start_plus_delta - datetime.now(timezone.utc)).total_seconds()
             if secs_left <= 0:
                 break
-            await asyncio.sleep(min(secs_left, interval))
+            await asyncio.sleep(min(secs_left, entity.interval))
 
         if is_running(switch_id):
             _LOGGER.debug("%s has passed, presence simulation is relaunched", entity.delta)
@@ -297,6 +257,7 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
             # simulation (unless HA has restarted recently - see recorder/history.py and RecorderRuns)
             # Do not add jitter to that first state time (which should be now anyways)
             if idx > 0:
+                _LOGGER.debug("Randomize the event within a range of +/-  %s sec", overridden_random)
                 random_delta = random.uniform(-overridden_random, overridden_random) # random number in seconds
                 _LOGGER.debug("Randomize the event of %s seconds", random_delta)
                 random_delta = random_delta / 60 / 60 / 24 # random number in days
@@ -304,13 +265,13 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
             await entity.async_add_next_event(target_time, entity_id, state.state)
 
             # Rather than a single sleep until target_time, periodically check to see if
-            # the simulation has been stopped.
+            # the simulation has been stoppe.
             while is_running(switch_id):
                 #sleep as long as the event is not in the past
                 secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
                 if secs_left <= 0:
                     break
-                await asyncio.sleep(min(secs_left, interval))
+                await asyncio.sleep(min(secs_left, entity.interval))
             if not is_running(switch_id):
                 return # exit if state is false
             #call service to turn on/off the light
@@ -359,7 +320,7 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
                     service_data[color_mode] = state.attributes[color_mode]
             if state.state == "on" or state.state == "off":
                 await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
-                event_data = {"entity_id": entity_id, "service": "light.turn_"+ state.state, "service_data": service_data}
+                event_date = {"entity_id": entity_id, "service": "light.turn_"+state.state, "service_data": service_data}
             else:
                 _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
 
@@ -411,8 +372,11 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
                 event_data = {"entity_id": entity_id, "service": "homeassistant.turn_"+state.state, "service_data": service_data}
             else:
                 _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
-        if event_data is not None:
-            hass.bus.fire(MY_EVENT, event_data)
+        try:
+            if event_data is not None:
+                hass.bus.fire(MY_EVENT, event_data)
+        except NameError:
+            pass
 
     def is_running(switch_id):
         """Returns true if the simulation is running"""
@@ -433,9 +397,21 @@ async def async_mysetup(hass, switch, entities, deltaStr, refreshInterval, resto
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
     hass.services.async_register(DOMAIN, "toggle", handle_toggle_presence_simulation)
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, launch_simulation_after_restart)
+    #hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, launch_simulation_after_restart)
 
     return True
+
+async def async_remove_entry(hass, entry):
+    """Handle removal of an entry."""
+    try:
+        await hass.config_entries.async_forward_entry_unload(
+            entry, SWITCH_PLATFORM
+        )
+        _LOGGER.info(
+            "Successfully removed switch from the presence simulation integration"
+        )
+    except ValueError:
+        pass
 
 async def update_listener(hass, entry):
     """Update listener after an update in the UI"""
@@ -444,17 +420,25 @@ async def update_listener(hass, entry):
     if len(entry.options) > 0:
         entry.data = entry.options
         entry.options = {}
-        elms = []
-        for elm in entry.data["entities"].split(","):
-            elms += [elm.strip()]
-        switch = entry.data["switch"]
-        await async_mysetup(hass, switch, elms, entry.data["delta"], entry.data["interval"], entry.data["restore"], entry.data["random"])
+        switch_id = SWITCH_PLATFORM+"."+re.sub("[^0-9a-zA-Z]", "_", entry.data["switch"].lower())
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        entity.update_config(entry)
 
 async def async_migrate_entry(hass, config_entry) -> bool:
     _LOGGER.debug("Migrating from version %s", config_entry.version)
     if config_entry.version == 1:
+        _LOGGER.debug("Will migrate to version 2")
         new = {**config_entry.data}
         new["switch"] = "Presence simulation"
+        old_unique_id = UNIQUE_ID
+        new_unique_id = "switch.presence_simulation"
+
+        def update_unique_id(entity_entry):
+            _LOGGER.debug("Updating unique id")
+            return {"new_unique_id": entity_entry.unique_id.replace(old_unique_id, new_unique_id)}
+        await async_migrate_entries(hass, config_entry.entry_id, update_unique_id)
+        _LOGGER.debug("Entries migrated")
+
+        hass.config_entries.async_update_entry(config_entry, data=new, unique_id=new_unique_id)
         config_entry.version = 2
-        hass.config_entries.async_update_entry(config_entry, data=new)
     return True
