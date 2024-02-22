@@ -385,10 +385,10 @@ async def async_setup_entry(hass, entry):
 
     async def launch_simulation_after_restart(call):
         for switch_id in hass.data[DOMAIN][SWITCH_PLATFORM]:
-            _LOGGER.debug("switch is %s", switch_id)
+            _LOGGER.debug("Launch simulation after restart : switch is %s", switch_id)
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
             #if the switch was on before previous restart
-            if entity.is_on:
+            if entity.is_on
                 _LOGGER.debug("Relaunching simulation %s", switch_id)
                 #turn the internal flag to off in order to be able to call the turn on service
                 entity.internal_turn_off()
@@ -397,7 +397,7 @@ async def async_setup_entry(hass, entry):
     hass.services.async_register(DOMAIN, "start", handle_presence_simulation)
     hass.services.async_register(DOMAIN, "stop", handle_stop_presence_simulation)
     hass.services.async_register(DOMAIN, "toggle", handle_toggle_presence_simulation)
-    #hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, launch_simulation_after_restart)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, launch_simulation_after_restart)
 
     return True
 

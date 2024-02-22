@@ -184,7 +184,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
                 if "restore_sated" in state.attributes:
                     self._restore_overriden = state.attributes["restore_states"]
                 #just set internally to on, the simulation service will be called later once the HA Start event is fired
-                await self.turn_on_async()
+                self.internal_turn_on()
             else:
                 _LOGGER.debug("State was off")
                 self.internal_turn_off()
