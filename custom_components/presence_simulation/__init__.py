@@ -388,7 +388,7 @@ async def async_setup_entry(hass, entry):
             _LOGGER.debug("Launch simulation after restart : switch is %s", switch_id)
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
             #if the switch was on before previous restart
-            if entity.is_on
+            if entity.is_on:
                 _LOGGER.debug("Relaunching simulation %s", switch_id)
                 #turn the internal flag to off in order to be able to call the turn on service
                 entity.internal_turn_off()
