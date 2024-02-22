@@ -5,6 +5,7 @@
             "user":{
                 "description": "Configuration",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Entity or group of entities",
                     "delta": "Delta (in days)",
                     "interval": "Refresh interval (in seconds)",

@@ -8,7 +8,8 @@
                     "entities": "Entity or group of entities",
                     "delta": "Delta (in days)",
                     "interval": "Poll interval (in seconds)",
-                    "restore": "Restore state after simulation"
+                    "restore": "Restore state after simulation",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
                 }
             }
         }
@@ -18,11 +19,12 @@
             "init":{
                 "description": "Configuration",
                 "data": {
-                    "switch": "The name of the presence simulation switch",
+                    "switch": "The name of the switch (SHOULD NOT be changed)",
                     "entities": "Entity or group of entities",
                     "delta": "Delta (in days)",
                     "interval": "Poll interval (in seconds)",
-                    "restore": "Restore state after simulation"
+                    "restore": "Restore state after simulation",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
                 }
             }
         }
