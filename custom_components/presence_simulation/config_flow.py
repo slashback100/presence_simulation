@@ -1,5 +1,9 @@
 from homeassistant import config_entries
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 import logging
 import voluptuous as vol
 from .const import DOMAIN
@@ -14,9 +18,11 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_finish_flow(flow, result):
             """Finish flow."""
     async def async_step_user(self, info=None):
+        all_entities = self.hass.states.async_entity_ids()
+        _LOGGER.debug("all_entities %s", all_entities)
         data_schema = {
             vol.Required("switch", description={"suggested_value": "Choose a unique name"}): str,
-            vol.Required("entities"): str, #cv.entity_ids,
+            vol.Required("entities"): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
             vol.Required("delta", default=7): int,
             vol.Required("interval", default=30): int,
             vol.Required("restore", default=False): bool,
@@ -37,9 +43,9 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="user", data_schema=vol.Schema(data_schema)
             )
         else:
+            self.data["entities"] = ",".join(self.data["entities"])
             return self.async_create_entry(title="Simulation Presence", data=self.data)
 
-    #@callback
     @staticmethod
     def async_get_options_flow(entry):
         _LOGGER.debug("entry %s", entry)
@@ -53,6 +59,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(self, info=None):
         errors: Dict[str, str] = {}
         _LOGGER.debug("config flow init %s", info)
+        all_entities = self.hass.states.async_entity_ids()
 
         if "interval" in self.config_entry.data:
             interval = self.config_entry.data["interval"]
@@ -69,7 +76,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         data_schema = {
             vol.Required("switch", default=self.config_entry.data["switch"]): str,
-            vol.Required("entities", default=self.config_entry.data["entities"]): str,
+            vol.Required("entities", default=self.config_entry.data["entities"].split(",")): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
             vol.Required("delta", default=self.config_entry.data["delta"]): int,
             vol.Required("interval", default=interval): int,
             vol.Required("restore", default=restore): bool,
@@ -92,5 +99,5 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 step_id="init", data_schema=vol.Schema(data_schema), errors=errors
             )
 
+        info["entities"] = ",".join(info["entities"])
         return self.async_create_entry(title="Simulation Presence", data=info)
-        #return self.async_create_entry(title=self.config_entry.data["switch"], data=info)
