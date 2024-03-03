@@ -4,9 +4,13 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
 )
+import re
 import logging
 import voluptuous as vol
 from .const import DOMAIN
+from .const import (
+        SWITCH_PLATFORM
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +22,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_finish_flow(flow, result):
             """Finish flow."""
     async def async_step_user(self, info=None):
+        errors: Dict[str, str] = {}
         all_entities = self.hass.states.async_entity_ids()
         _LOGGER.debug("all_entities %s", all_entities)
         data_schema = {
@@ -31,6 +36,15 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not info:
             return self.async_show_form(
                 step_id="user", data_schema=vol.Schema(data_schema)
+            )
+        #if the name match with an already existing entity, ask to change it
+        all_entities = self.hass.states.async_entity_ids()
+        switch_id = SWITCH_PLATFORM+"."+re.sub("[^0-9a-zA-Z]", "_", info["switch"].lower())
+        if switch_id in all_entities:
+            _LOGGER.error("Entity name is already taken, please change the name of the switch")
+            errors["base"] = "not_unique_name"
+            return self.async_show_form(
+                step_id="user", data_schema=vol.Schema(data_schema), errors=errors
             )
         self.data = info
         try:

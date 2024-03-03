@@ -316,6 +316,8 @@ async def async_setup_entry(hass, entry):
                 if color_mode != "color_temp":
                     # Attribute color_mode will be xy, hs, rgb...
                     color_mode = color_mode+"_color"
+                elif color_mode == "color_temp" and "color_temp" in state.attributes and state.attributes["color_temp"] is not None:
+                    service_data["color_temp"] = state.attributes["color_temp"]
                 if color_mode in state.attributes:
                     service_data[color_mode] = state.attributes[color_mode]
             if state.state == "on" or state.state == "off":
