@@ -21,6 +21,7 @@ from .const import (
         MY_EVENT
 )
 _LOGGER = logging.getLogger(__name__)
+MIN_DELAY = 1 #time in second for the minimal switch delay
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
@@ -266,6 +267,10 @@ async def async_setup_entry(hass, entry):
 
             # Rather than a single sleep until target_time, periodically check to see if
             # the simulation has been stoppe.
+            initial_secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
+            if initial_secs_left < MIN_DELAY:
+                # added to avoid too narrowed toggle that could happen because of the random delta
+                target_time = datetime.now(timezone.utc) + timedelta(MIN_DELAY / 60 / 60 / 24)
             while is_running(switch_id):
                 #sleep as long as the event is not in the past
                 secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
@@ -316,9 +321,7 @@ async def async_setup_entry(hass, entry):
                 if color_mode != "color_temp":
                     # Attribute color_mode will be xy, hs, rgb...
                     color_mode = color_mode+"_color"
-                elif color_mode == "color_temp" and "color_temp" in state.attributes and state.attributes["color_temp"] is not None:
-                    service_data["color_temp"] = state.attributes["color_temp"]
-                if color_mode in state.attributes:
+                if color_mode in state.attributes and state.attributes[color_mode] is not None:
                     service_data[color_mode] = state.attributes[color_mode]
             if state.state == "on" or state.state == "off":
                 await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
