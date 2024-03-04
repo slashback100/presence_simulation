@@ -257,12 +257,17 @@ async def async_setup_entry(hass, entry):
                 _LOGGER.debug("Randomize the event of %s seconds", random_delta)
                 random_delta = random_delta / 60 / 60 / 24 # random number in days
                 target_time += timedelta(random_delta)
+                initial_secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
+                if initial_secs_left < MIN_DELAY and random_val > 0:
+                    _LOGGER.debug("Random feature is used and wait is below min --> wait min time instead. target_time before %s", target_time)
+                    # added to avoid too narrowed toggles that could happen because of the random delta
+                    target_time = datetime.now(timezone.utc) + timedelta(MIN_DELAY / 60 / 60 / 24)
+                    _LOGGER.debug("target_time after %s", target_time)
+                else:
+                    _LOGGER.debug("initial_secs_left %s, target_time", initial_secs_left, target_time)
+
             await entity.async_add_next_event(target_time, entity_id, state.state)
 
-            initial_secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
-            if initial_secs_left < MIN_DELAY and random_val > 0:
-                # added to avoid too narrowed toggles that could happen because of the random delta
-                target_time = datetime.now(timezone.utc) + timedelta(MIN_DELAY / 60 / 60 / 24)
             # Rather than a single sleep until target_time, periodically check to see if
             # the simulation has been stopped
             while is_running(switch_id):
