@@ -50,11 +50,11 @@ NB: it can also be added as a custom repository if you have an issue with above 
   <img width="400px" src="https://github.com/slashback100/presence_simulation/raw/main/custom_components/presence_simulation/images/configFlow.png" alt="accessibility text">
 </p>
 
-* Set the group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups, media_player or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`. You can also setup several entities. If you use a group, the simulation will act on each entity of the group independently.
+* Set the entties or group of entities to be used in the simulation. It can be a group of lights, switches, covers, light groups, media_player or of any component that can be turned on and off with the service `homeassistant.turn_on` and `homeassistant.turn_off`. You can setup several entities. If you use a group, the simulation will act on each entity of the group independently.
 * Set the number of days of history the simulation will use (the delta)
 * Set the poll interval in seconds that determines how quickly the simulation notices that it has been requested to stop. Default is 30 seconds. Warning, the smaller the number you choose, the more computing process the component will take.
 * After the simulation, choose to restore the states as they were before the start of ths simulation
-* You can choose to randomize the activation/deactivation of your entities. '0' to disable this behaviour, or a period in seconds for the maximum of seconds the random switching will be done. This random period is added (or substracted) from the time the entity was actually switched on or off in your historical data.
+* You can choose to randomize the activation/deactivation of your entities. '0' to disable this behaviour, a positive number (representing a number of seconds) to activate the behaviour. A random number of seconds limited to this parameter is added to (or substracted from) the time the entity was actually switched on or off in your historical data.
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
@@ -62,16 +62,17 @@ You can edit these configurations afterwards by clicking on Options in the integ
 
 # Use it
 
-The component will create an entity called `switch.presence_simulation`. This entity will be set to `on` when the simulation is running. `off` otherwise.
+The component will create an entity with a name computed from the name you choosed (`switch.presence_simulation` for example). This entity will be set to `on` when the simulation is running. `off` otherwise.
 You have 2 ways of launching the simulation:
 ## With the switch
-Toggling the `switch.presence_simulation` will toggle the presence simulation.
+Toggling the switch (`switch.presence_simulation` for example) will toggle the presence simulation.
 ## With the services
 Three services are available:
 ### Start the simulation
-The service `presence_simulation.start` will start the simulation and set the `switch.presence_simulation` entity to `on`.
-Optionally, you can reference a list of entities, a delta or choose to restore the states if you want to override the component configuration:
+The service `presence_simulation.start` will start the simulation and set the referenced presence simulation switch entity to `on`.
+Optionally, you can reference a list of entities, a delta, choose to restore the states or set a random offset if you want to override the presence simulation switch configuration:
 ```
+switch_id: switch.presence_simulation
 entity_id:
   - group.outside_lights
   - light.living_room
@@ -83,11 +84,11 @@ random: 300
 ### Stop the simulation
 The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
 ### Toggle the simulation
-The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the `switch.presence_simulation` entity.
+The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the switch entity.
 
 # Event
 
-Each time the simulation calls a service (turn on a light, open a cover, ...), an event `presence_simulation_change` is triggerd. You can catch this event in an automation, to notify you for instance.
+Each time the simulation calls a service (turn on a light, open a cover, ...), an event `presence_simulation_change` is fired. You can catch this event in an automation, to notify you for instance.
 
 # Buy me a coffee
 Liked some of my work? Buy me a coffee (or more likely a beer)
