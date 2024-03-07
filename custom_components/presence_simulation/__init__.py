@@ -110,13 +110,17 @@ async def async_setup_entry(hass, entry):
             internal = call.data.get("internal", False) and call.data.get("internal")
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
             if not is_running(switch_id) and not internal:
-                if isinstance(call.data.get("entity_id"), list):
-                    await entity.set_entities(call.data.get("entity_id"))
-                else:
-                    await entity.set_entities([call.data.get("entity_id")])
-                await entity.set_delta(call.data.get("delta", 7))
-                await entity.set_restore(call.data.get("restore_states", False))
-                await entity.set_random(call.data.get("random", 0))
+                if "entity_id" in call.data:
+                    if isinstance(call.data.get("entity_id"), list):
+                        await entity.set_entities(call.data.get("entity_id"))
+                    else:
+                        await entity.set_entities([call.data.get("entity_id")])
+                if "delta" in call.data:
+                    await entity.set_delta(call.data.get("delta", 7))
+                if "restore_states" in call.data:
+                    await entity.set_restore(call.data.get("restore_states", False))
+                if "random" in call.data:
+                    await entity.set_random(call.data.get("random", 0))
         else: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
               # or this is a restart and the simulation was launched after a restart of HA
             #get the switch entity
