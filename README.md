@@ -70,6 +70,7 @@ Toggling the switch (`switch.presence_simulation` for example) will toggle the p
 Three services are available:
 ### Start the simulation
 The service `presence_simulation.start` will start the simulation and set the referenced presence simulation switch entity to `on`.
+
 ⚠️ From v4, the parameter `switch_id` is mandatory. It should be the name of the switch you wan't to turn on.
 Optionally, you can reference a list of entities, a delta, choose to restore the states or set a random offset if you want to override the presence simulation switch configuration:
 ```
@@ -84,9 +85,11 @@ random: 300
 ```
 ### Stop the simulation
 The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
+
 ⚠️ From v4, the parameter `switch_id` is mandatory. It should be the name of the switch you wan't to turn off.
 ### Toggle the simulation
 The service `presence_simulation.toggle` will start or stop the simulation, depending on the current state of the switch entity.
+
 ⚠️ From v4, the parameter `switch_id` is mandatory. It should be the name of the switch you wan't to toggle.
 
 # Event
