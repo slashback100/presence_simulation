@@ -44,6 +44,7 @@ async def async_setup_entry(hass, entry):
         """Stop the presence simulation, raising a potential error"""
         #get the switch entity
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+
         #set the state of the switch to off. Not calling turn_off to avoid calling the stop service again
         entity.internal_turn_off()
         if not restart:
@@ -75,7 +76,13 @@ async def async_setup_entry(hass, entry):
         """Stop the presence simulation"""
         _LOGGER.debug("Stopped presence simulation")
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
-            switch_id = call.data.get("switch_id")
+            if "switch_id" in call.data:
+                switch_id = call.data.get("switch_id")
+            elif len(hass.data[DOMAIN][SWITCH_PLATFORM]) == 1:
+                switch_id = list(hass.data[DOMAIN][SWITCH_PLATFORM])[0]
+            else:
+                _LOGGER.error("Since you have several presence simulation switch, you have to add a switch_id parameter in the service call")
+                return
 
         await stop_presence_simulation(restart=restart, switch_id=switch_id)
 
@@ -106,10 +113,20 @@ async def async_setup_entry(hass, entry):
         after_ha_restart=False
         if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle, or a restore after a HA restart
             #get the switch entity
-            switch_id = call.data.get("switch_id")
-            #internal = ("internal" in call.data) and call.data.get("internal")
+            _LOGGER.debug("All Switches: %s", hass.data[DOMAIN][SWITCH_PLATFORM])
+            for id in hass.data[DOMAIN][SWITCH_PLATFORM]:
+                _LOGGER.debug(hass.data[DOMAIN][SWITCH_PLATFORM][id])
+            if "switch_id" in call.data:
+                switch_id = call.data.get("switch_id")
+                #internal = ("internal" in call.data) and call.data.get("internal")
+                entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+            elif len(hass.data[DOMAIN][SWITCH_PLATFORM]) == 1:
+                switch_id = list(hass.data[DOMAIN][SWITCH_PLATFORM])[0]
+                entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+            else:
+                _LOGGER.error("Since you have several presence simulation switch, you have to add a switch_id parameter in the service call")
+                return
             internal = call.data.get("internal", False) and call.data.get("internal")
-            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
             if not is_running(switch_id) and not internal:
                 if "entity_id" in call.data:
                     if isinstance(call.data.get("entity_id"), list):
@@ -212,7 +229,15 @@ async def async_setup_entry(hass, entry):
 
     async def handle_toggle_presence_simulation(call):
         """Toggle the presence simulation"""
-        if is_running(call.data.get("switch_id")):
+        if "switch_id" in call.data:
+            switch_id = call.data.get("switch_id")
+        elif len(hass.data[DOMAIN][SWITCH_PLATFORM]) == 1:
+            switch_id = list(hass.data[DOMAIN][SWITCH_PLATFORM])[0]
+        else:
+            _LOGGER.error("Since you have several presence simulation switch, you have to add a switch_id parameter in the service call")
+            return
+
+        if is_running(switch_id):
             await handle_stop_presence_simulation(call, restart=False)
         else:
             await handle_presence_simulation(call, restart=False)
@@ -270,7 +295,7 @@ async def async_setup_entry(hass, entry):
                     target_time = datetime.now(timezone.utc) + timedelta(MIN_DELAY / 60 / 60 / 24)
                     _LOGGER.debug("target_time after %s", target_time)
                 else:
-                    _LOGGER.debug("initial_secs_left %s, target_time", initial_secs_left, target_time)
+                    _LOGGER.debug("initial_secs_left %s, target_time %s", initial_secs_left, target_time)
 
             await entity.async_add_next_event(target_time, entity_id, state.state)
 
