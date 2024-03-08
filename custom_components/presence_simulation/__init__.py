@@ -103,7 +103,8 @@ async def async_setup_entry(hass, entry):
 
     async def handle_presence_simulation(call, restart=False, switch_id=None):
         """Start the presence simulation"""
-        if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle
+        after_ha_restart=False
+        if call is not None: #if we are here, it is a call of the service, or a restart at the end of a cycle, or a restore after a HA restart
             #get the switch entity
             switch_id = call.data.get("switch_id")
             #internal = ("internal" in call.data) and call.data.get("internal")
@@ -121,8 +122,9 @@ async def async_setup_entry(hass, entry):
                     await entity.set_restore(call.data.get("restore_states", False))
                 if "random" in call.data:
                     await entity.set_random(call.data.get("random", 0))
+                if "after_ha_restart" in call.data:
+                    after_ha_restart = call.data.get("after_ha_restart", False)
         else: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
-              # or this is a restart and the simulation was launched after a restart of HA
             #get the switch entity
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
             #make sure the initial config of the simulation is used
@@ -166,7 +168,7 @@ async def async_setup_entry(hass, entry):
                 except Exception as e:
                     _LOGGER.warning("Start datetime could not be set to HA timezone: ", e)
                     await entity.set_start_datetime(datetime.now())
-            if entity.restore:
+            if entity.restore and not after_ha_restart:
                 service_data = {}
                 service_data["scene_id"] = switch_id.replace(".", "_")+"_"+RESTORE_SCENE
                 service_data["snapshot_entities"] = expanded_entities

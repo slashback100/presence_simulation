@@ -78,10 +78,10 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._next_events = []
         self.async_write_ha_state()
 
-    async def turn_on_async(self, **kwargs):
+    async def turn_on_async(self, after_ha_restart=False, **kwargs):
         """Turn on the presence simulation"""
         _LOGGER.debug("Turn on of the presence simulation through the switch")
-        await self.hass.services.async_call(DOMAIN, "start", {"switch_id": self.id, "internal": True})
+        await self.hass.services.async_call(DOMAIN, "start", {"switch_id": self.id, "internal": True, "after_ha_restart": after_ha_restart})
 
     def turn_on(self, **kwargs):
         """Turn on the presence simulation"""
