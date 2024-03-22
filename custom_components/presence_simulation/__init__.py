@@ -355,7 +355,7 @@ async def async_setup_entry(hass, entry):
                     service_data[color_mode] = state.attributes[color_mode]
             if state.state == "on" or state.state == "off":
                 await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
-                event_date = {"entity_id": entity_id, "service": "light.turn_"+state.state, "service_data": service_data}
+                event_data = {"entity_id": entity_id, "service": "light.turn_"+state.state, "service_data": service_data}
             else:
                 _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
 
