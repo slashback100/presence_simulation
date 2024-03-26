@@ -83,8 +83,10 @@ async def async_setup_entry(hass, entry):
             else:
                 _LOGGER.error("Since you have several presence simulation switch, you have to add a switch_id parameter in the service call")
                 return
-
-        await stop_presence_simulation(restart=restart, switch_id=switch_id)
+        if is_running(switch_id):
+            await stop_presence_simulation(restart=restart, switch_id=switch_id)
+        else:
+            _LOGGER.warning("Presence simulation switch %s is not on, can't be turned off", switch_id)
 
     async def async_expand_entities(entities):
         """If the entity is a group, return the list of the entities within, otherwise, return the entity"""
@@ -415,7 +417,11 @@ async def async_setup_entry(hass, entry):
 
     def is_running(switch_id):
         """Returns true if the simulation is running"""
-        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        try:
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        except Exception as e:
+            _LOGGER.error("Could not load presence simulation switch %s", switch_id)
+            raise e
         return entity.is_on
 
     async def launch_simulation_after_restart(call):
