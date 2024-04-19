@@ -2,7 +2,7 @@
     "title": "Simulation der Anwesenheit",
     "config": {
 		"error": {
-			"not_unique_name": "The chosen switch name is already taken by another entity, please choose a new name"
+			"not_unique_name": "Der gewählte Name für den Schalter ist bereits in Verwendung durch eine andere Entität, bitte wähle einen neuen Namen."
 		},
         "step": {
             "user":{
@@ -19,7 +19,7 @@
     },
     "options": {
 		"error": {
-			"cannot_change_name": "The name of the swtich can't be changed"
+			"cannot_change_name": "Der Name des Schalters kann nicht geändert werden"
 		},
         "step": {
             "init":{
