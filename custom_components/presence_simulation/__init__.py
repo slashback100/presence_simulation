@@ -83,8 +83,10 @@ async def async_setup_entry(hass, entry):
             else:
                 _LOGGER.error("Since you have several presence simulation switch, you have to add a switch_id parameter in the service call")
                 return
-
-        await stop_presence_simulation(restart=restart, switch_id=switch_id)
+        if is_running(switch_id):
+            await stop_presence_simulation(restart=restart, switch_id=switch_id)
+        else:
+            _LOGGER.warning("Presence simulation switch %s is not on, can't be turned off", switch_id)
 
     async def async_expand_entities(entities):
         """If the entity is a group, return the list of the entities within, otherwise, return the entity"""
