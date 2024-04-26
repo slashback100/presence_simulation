@@ -12,7 +12,8 @@
                     "delta": "Delta (in days)",
                     "interval": "Poll interval (in seconds)",
                     "restore": "Restore state after simulation",
-                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -30,7 +31,8 @@
                     "delta": "Delta (in days)",
                     "interval": "Poll interval (in seconds)",
                     "restore": "Restore state after simulation",
-                    "random": "Add a random time for switching entities. This parameter define the max time in seconds"
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

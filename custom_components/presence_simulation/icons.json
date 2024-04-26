@@ -1,7 +1,0 @@
-{
-		"services": {
-				"start": "mdi:timer-play",
-				"stop": "mdi:timer-stop",
-				"toggle": "mdi:home-switch-outline"
-		}
-}

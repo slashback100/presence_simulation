@@ -83,10 +83,8 @@ async def async_setup_entry(hass, entry):
             else:
                 _LOGGER.error("Since you have several presence simulation switch, you have to add a switch_id parameter in the service call")
                 return
-        if is_running(switch_id):
-            await stop_presence_simulation(restart=restart, switch_id=switch_id)
-        else:
-            _LOGGER.warning("Presence simulation switch %s is not on, can't be turned off", switch_id)
+
+        await stop_presence_simulation(restart=restart, switch_id=switch_id)
 
     async def async_expand_entities(entities):
         """If the entity is a group, return the list of the entities within, otherwise, return the entity"""
@@ -312,11 +310,11 @@ async def async_setup_entry(hass, entry):
             if not is_running(switch_id):
                 return # exit if state is false
             #call service to turn on/off the light
-            await update_entity(entity_id, state)
+            await update_entity(entity_id, state, entity.unavailable_as_off)
             #and remove this event from the attribute list of the switch entity
             await entity.async_remove_event(entity_id)
 
-    async def update_entity(entity_id, state):
+    async def update_entity(entity_id, state, unavailable_as_off):
         """ Switch the entity """
         # use service scene.apply ?? https://www.home-assistant.io/integrations/scene/
         """
@@ -355,9 +353,10 @@ async def async_setup_entry(hass, entry):
                     color_mode = color_mode+"_color"
                 if color_mode in state.attributes and state.attributes[color_mode] is not None:
                     service_data[color_mode] = state.attributes[color_mode]
-            if state.state == "on" or state.state == "off":
-                await hass.services.async_call("light", "turn_"+state.state, service_data, blocking=False)
-                event_data = {"entity_id": entity_id, "service": "light.turn_"+state.state, "service_data": service_data}
+            if state.state == "on" or state.state == "off" or (state.state == "unavailable" and unavailable_as_off):
+                s = "on" if state.state == "on" else "off"
+                await hass.services.async_call("light", "turn_"+s, service_data, blocking=False)
+                event_data = {"entity_id": entity_id, "service": "light.turn_"+s, "service_data": service_data}
             else:
                 _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
 
@@ -369,7 +368,7 @@ async def async_setup_entry(hass, entry):
                 blocking = True
             else:
                 blocking = False
-            if state.state == "closed":
+            if state.state == "closed" or (state.state == "unavailable" and unavailable_as_off):
                 _LOGGER.debug("Closing cover %s", entity_id)
                 await hass.services.async_call("cover", "close_cover", service_data, blocking=blocking)
                 event_data = {"entity_id": entity_id, "service": "cover.close_cover", "service_data": service_data}
@@ -396,7 +395,7 @@ async def async_setup_entry(hass, entry):
             if state.state == "playing":
                 await hass.services.async_call("media_player", "media_play", service_data, blocking=False)
                 event_data = {"entity_id": entity_id, "service": "media_player.media_play", "service_data": service_data}
-            elif state.state != "unavailable": #idle, paused, off
+            elif state.state != "unavailable" or unavailable_as_off: #idle, paused, off
                 await hass.services.async_call("media_player", "media_stop", service_data, blocking=False)
                 event_data = {"entity_id": entity_id, "service": "media_player.media_stop", "service_data": service_data}
             else:
@@ -404,9 +403,10 @@ async def async_setup_entry(hass, entry):
 
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
-            if state.state == "on" or state.state == "off":
-                await hass.services.async_call("homeassistant", "turn_"+state.state, service_data, blocking=False)
-                event_data = {"entity_id": entity_id, "service": "homeassistant.turn_"+state.state, "service_data": service_data}
+            if state.state == "on" or state.state == "off" or (state.state == "unavailable_as_off" and unavailable_as_off):
+                s = "on" if state.state == "on" else "off"
+                await hass.services.async_call("homeassistant", "turn_"+s, service_data, blocking=False)
+                event_data = {"entity_id": entity_id, "service": "homeassistant.turn_"+s, "service_data": service_data}
             else:
                 _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
         try:
@@ -417,11 +417,7 @@ async def async_setup_entry(hass, entry):
 
     def is_running(switch_id):
         """Returns true if the simulation is running"""
-        try:
-            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
-        except Exception as e:
-            _LOGGER.error("Could not load presence simulation switch %s", switch_id)
-            raise e
+        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
         return entity.is_on
 
     async def launch_simulation_after_restart(call):
@@ -482,4 +478,10 @@ async def async_migrate_entry(hass, config_entry) -> bool:
 
         hass.config_entries.async_update_entry(config_entry, data=new, unique_id=new_unique_id)
         config_entry.version = 2
+    if config_entry.version == 2:
+        _LOGGER.debug("Will migrate to version 3")
+        new = {**config_entry.data}
+        new["unavailable_as_off"] = False
+        hass.config_entries.async_update_entry(config_entry, data=new)
+        config_entry.version = 3
     return True

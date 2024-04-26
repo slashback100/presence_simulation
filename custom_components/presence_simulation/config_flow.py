@@ -32,6 +32,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("interval", default=30): int,
             vol.Required("restore", default=False): bool,
             vol.Required("random", default=0): int,
+            vol.Required("unavailable_as_off", default=False): bool,
         }
         if not info:
             return self.async_show_form(
@@ -87,6 +88,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             random = self.config_entry.data["random"]
         else:
             random = 0
+        if "unavailable_as_off" in self.config_entry.data:
+            unavailable_as_off = self.config_entry.data["unavailable_as_off"]
+        else:
+            unavailable_as_off = False
 
         data_schema = {
             vol.Required("switch", default=self.config_entry.data["switch"]): str,
@@ -95,6 +100,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("interval", default=interval): int,
             vol.Required("restore", default=restore): bool,
             vol.Required("random", default=random): int,
+            vol.Required("unavailable_as_off", default=unavailable_as_off): bool,
         }
         _LOGGER.debug("switch %s", self.config_entry.data["switch"])
         _LOGGER.debug("config_entry data %s", self.config_entry.data)
