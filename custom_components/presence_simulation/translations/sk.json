@@ -8,6 +8,7 @@
             "user":{
                 "description": "Konfigurácia",
                 "data": {
+		    "switch": "Názov prepínača simulácie prítomnosti",
                     "entities": "Entita alebo skupina entít",
                     "delta": "Delta (v dňoch)",
                     "interval": "Interval obnovenia (v sekundách)",
