@@ -200,10 +200,13 @@ async def async_setup_entry(hass, entry):
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
         await get_instance(hass).async_add_executor_job(handle_presence_simulation_sync, hass, call, minus_delta, expanded_entities, switch_id)
 
-    def filter_out_undefined(dic):
+    def filter_out_undefined(dic, filter_out_unavailable):
+        states_to_remove = ["undefined", "unknown"]
+        if filter_out_unavailable:
+            states_to_remove += ["unavailable"]
         for hist in dic: #iterate on the entitied
             for state in dic[hist].copy(): #iterate on the historic
-                if state.state in ["undefined", "unavailable", "unknown"] :
+                if state.state in states_to_remove:
                     _LOGGER.debug('Deleting state')
                     dic[hist].remove(state)
             #dic[hist] = list(filter(lambda x : x.state not in ["undefined", "unavailable", "unknown"], dic[hist]))
@@ -212,13 +215,13 @@ async def async_setup_entry(hass, entry):
     def handle_presence_simulation_sync(hass, call, minus_delta, expanded_entities, switch_id):
         dic = get_significant_states(hass=hass, start_time=minus_delta, entity_ids=expanded_entities, include_start_time_state=True, significant_changes_only=False)
         _LOGGER.debug("history: %s", dic)
-        dic = filter_out_undefined(dic)
-        _LOGGER.debug("history after filtering: %s", dic)
         # handle_presence_simulation_sync is called from async_add_executor_job,
         # so may not be running in the event loop, so we can't call hass.async_create_task.
         # instead calling hass.create_task, which is thread_safe.
         # See homeassistant/core.py:create_task
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        dic = filter_out_undefined(dic, not entity.unavailable_as_off)
+        _LOGGER.debug("history after filtering: %s", dic)
         for entity_id in dic:
             _LOGGER.debug('Entity %s', entity_id)
             #launch an async task by entity_id
@@ -464,7 +467,11 @@ async def update_listener(hass, entry):
         entry.data = entry.options
         entry.options = {}
         switch_id = SWITCH_PLATFORM+"."+re.sub("[^0-9a-zA-Z]", "_", entry.data["switch"].lower())
-        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        try:
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        except Exception as e:
+            _LOGGER.debug("Switch with id %s not known", switch_id);
+            return
         entity.update_config(entry)
 
 async def async_migrate_entry(hass, config_entry) -> bool:
