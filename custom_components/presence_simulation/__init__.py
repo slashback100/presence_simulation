@@ -419,8 +419,12 @@ async def async_setup_entry(hass, entry):
 
     def is_running(switch_id):
         """Returns true if the simulation is running"""
-        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
-        return entity.is_on
+        try:
+            entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
+        except Exception as e:
+            _LOGGER.error("Could not load presence simulation switch %s", switch_id)
+            raise e
+       return entity.is_on
 
     async def launch_simulation_after_restart(call):
         for switch_id in hass.data[DOMAIN][SWITCH_PLATFORM]:
