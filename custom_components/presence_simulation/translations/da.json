@@ -14,7 +14,7 @@
                     "interval": "Opdateringsinterval (i sekunder)",
                     "restore": "Gendan tilstand efter simulering",
                     "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -33,7 +33,7 @@
                     "interval": "Opdateringsinterval (i sekunder)",
                     "restore": "Gendan tilstand efter simulering",
                     "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

@@ -14,7 +14,7 @@
                     "interval": "Interval obnovenia (v sekundách)",
                     "restore": "Obnovenie stavu po simulácii",
                     "random": "Pridajte náhodný čas na prepínanie entít. Tento parameter definuje maximálny čas v sekundách",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -33,7 +33,7 @@
                     "interval": "Interval obnovenia (v sekundách)",
                     "restore": "Obnovenie stavu po simulácii",
                     "random": "Pridajte náhodný čas na prepínanie entít. Tento parameter definuje maximálny čas v sekundách",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

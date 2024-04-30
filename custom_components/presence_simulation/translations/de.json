@@ -14,7 +14,7 @@
                     "interval": "Aktualisierungs-Intervall (in Sekunden)",
                     "restore": "Zustand nach Simulation wiederherstellen",
                     "random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -33,7 +33,7 @@
                     "interval": "Aktualisierungs-Intervall (in Sekunden)",
                     "restore": "Zustand nach Simulation wiederherstellen",
                     "random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

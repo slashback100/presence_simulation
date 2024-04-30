@@ -14,7 +14,7 @@
                     "interval": "Częstotliwość odświeżania (w sekundach)",
                     "restore": "Przywróć stan po symulacji",
                     "random": "Dodaj losowy czas przełączania encji. Ten parametr określa maksymalny czas w sekundach",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -33,7 +33,7 @@
                     "interval": "Częstotliwość odświeżania (w sekundach)",
                     "restore": "Przywróć stan po symulacji",
                     "random": "Dodaj losowy czas przełączania encji. Ten parametr określa maksymalny czas w sekundach",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

@@ -14,7 +14,7 @@
                     "interval": "Інтервал оновлення (в секундах)",
                     "restore": "Відновити стан після симуляції",
                     "random": "Додавати випадковий час до перемикання сутностей. Цей параметр визначає максимальний час у секундах.",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -33,7 +33,7 @@
                     "interval": "Інтервал оновлення (в секундах)",
                     "restore": "Відновити стан після симуляції",
                     "random": "Додавати випадковий час до перемикання сутностей. Цей параметр визначає максимальний час у секундах.",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

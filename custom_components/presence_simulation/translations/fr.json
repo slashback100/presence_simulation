@@ -14,7 +14,7 @@
                     "interval": "Intervalle de mise à jour (en secondes)",
                     "restore": "Restaurer l'état des entités à la fin de la simulation",
                     "random": "Ajout d'un délai (s) aléatoire pour les changements d'entités",
-		    "unavailable_as_off": "Considérer le statut Indisponible comme éteint"
+                    "unavailable_as_off": "Considérer le statut Indisponible comme éteint"
                 }
             }
         }
@@ -33,7 +33,7 @@
                     "interval": "Intervalle de mise à jour (en secondes)",
                     "restore": "Restaurer l'état des entités à la fin de la simulation",
                     "random": "Ajout d'un délai (s) aléatoire pour les changements d'entités",
-		    "unavailable_as_off": "Considérer le statut Indisponible comme éteint"
+                    "unavailable_as_off": "Considérer le statut Indisponible comme éteint"
                 }
             }
         }

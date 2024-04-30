@@ -14,7 +14,7 @@
                     "interval": "Prodleva obnovení (v sekundách)",
                     "restore": "Obnovit stav po předstírání",
                     "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -33,7 +33,7 @@
                     "interval": "Prodleva obnovení (v sekundách)",
                     "restore": "Obnovit stav po předstírání",
                     "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách",
-		    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
