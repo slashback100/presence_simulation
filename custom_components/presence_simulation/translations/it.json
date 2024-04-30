@@ -8,10 +8,13 @@
             "user":{
                 "description": "Configurazione",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Entità o gruppo di entità",
                     "delta": "Delta (in giorni)",
                     "interval": "Intervallo di aggiornamento (in secondi)",
-                    "restore": "Ripristina stati precedenti alla simulazione"
+                    "restore": "Ripristina stati precedenti alla simulazione",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -24,10 +27,13 @@
             "init":{
                 "description": "Configurazione",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Entità o gruppo di entità",
                     "delta": "Delta (in giorni)",
                     "interval": "Intervallo di aggiornamento (in secondi)",
-                    "restore": "Ripristina stati precedenti alla simulazione"
+                    "restore": "Ripristina stati precedenti alla simulazione",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

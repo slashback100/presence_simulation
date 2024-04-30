@@ -8,11 +8,13 @@
             "user":{
                 "description": "Konfiguration",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Enhed eller gruppe af enheder",
                     "delta": "Delta (i dage)",
                     "interval": "Opdateringsinterval (i sekunder)",
                     "restore": "Gendan tilstand efter simulering",
-                    "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder"
+                    "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -25,11 +27,13 @@
             "init":{
                 "description": "Konfiguration",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Enhed eller gruppe af enheder",
                     "delta": "Delta (i dage)",
                     "interval": "Opdateringsinterval (i sekunder)",
                     "restore": "Gendan tilstand efter simulering",
-                    "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder"
+                    "random": "Tilføj et tilfældigt tidspunkt for tænd/sluk af enheder. Dette parameter definerer den maksimale tid i sekunder",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

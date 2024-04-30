@@ -8,11 +8,13 @@
             "user":{
                 "description": "Nastavení",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Entita nebo skupina entit",
                     "delta": "Delta (ve dnech)",
                     "interval": "Prodleva obnovení (v sekundách)",
                     "restore": "Obnovit stav po předstírání",
-                    "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách"
+                    "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -25,11 +27,13 @@
             "init":{
                 "description": "Nastavení",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Entita nebo skupina entit",
                     "delta": "Delta (ve dnech)",
                     "interval": "Prodleva obnovení (v sekundách)",
                     "restore": "Obnovit stav po předstírání",
-                    "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách"
+                    "random": "Přidat náhodný čas pro přepínání entit. Tento parametr nastavuje maximální čas v sekundách",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }

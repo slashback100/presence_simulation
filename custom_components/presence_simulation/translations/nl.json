@@ -8,10 +8,13 @@
             "user":{
                 "description": "Configuratie",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Entity of groep van entities",
                     "delta": "Delta (in dagen)",
                     "interval": "Verversingsinterval (in seconden)",
-                    "restore": "Herstel toestand na simulatie"
+                    "restore": "Herstel toestand na simulatie",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -24,10 +27,13 @@
             "init":{
                 "description": "Configuratie",
                 "data": {
+                    "switch": "The name of the presence simulation switch",
                     "entities": "Entity of groep van entities",
                     "delta": "Delta (in dagen)",
                     "interval": "Verversingsinterval (in seconden)",
-                    "restore": "Herstel toestand na simulatie"
+                    "restore": "Herstel toestand na simulatie",
+                    "random": "Add a random time for switching entities. This parameter define the max time in seconds",
+		    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
