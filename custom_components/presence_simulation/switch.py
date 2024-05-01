@@ -58,7 +58,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._interval = int(config.data["interval"])
         self._delta = config.data["delta"]
         self._restore = config.data["restore"]
-        self._unavailable_as_off = config.data["unavailable_as_off"]
+        self._unavailable_as_off = config.data.get("unavailable_as_off", False)
         self.reset_default_values()
         _LOGGER.debug("entities %s", config.data["entities"])
 
