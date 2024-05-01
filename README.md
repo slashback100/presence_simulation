@@ -55,6 +55,7 @@ NB: it can also be added as a custom repository if you have an issue with above 
 * Set the poll interval in seconds that determines how quickly the simulation notices that it has been requested to stop. Default is 30 seconds. Warning, the smaller the number you choose, the more computing process the component will take.
 * After the simulation, choose to restore the states as they were before the start of ths simulation
 * You can choose to randomize the activation/deactivation of your entities. '0' to disable this behaviour, a positive number (representing a number of seconds) to activate the behaviour. A random number of seconds limited to this parameter is added to (or substracted from) the time the entity was actually switched on or off in your historical data.
+* You can choose to consider 'Unavailable' states as 'Off' state (needed for some devices that are unavailable instead of off) 
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
