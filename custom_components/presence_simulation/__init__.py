@@ -11,6 +11,7 @@ from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.components.recorder import get_instance
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.helpers.entity_registry import async_migrate_entries
+from homeassistant.config_entries import ConfigEntry
 from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
@@ -474,7 +475,7 @@ async def update_listener(hass, entry):
             return
         entity.update_config(entry)
 
-async def async_migrate_entry(hass, config_entry) -> bool:
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
     _LOGGER.debug("Migrating from version %s", config_entry.version)
     if config_entry.version == 1:
         _LOGGER.debug("Will migrate to version 2")
@@ -489,12 +490,12 @@ async def async_migrate_entry(hass, config_entry) -> bool:
         await async_migrate_entries(hass, config_entry.entry_id, update_unique_id)
         _LOGGER.debug("Entries migrated")
 
-        hass.config_entries.async_update_entry(config_entry, data=new, unique_id=new_unique_id)
-        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new, unique_id=new_unique_id, version=2)
+
     if config_entry.version == 2:
         _LOGGER.debug("Will migrate to version 3")
         new = {**config_entry.data}
         new["unavailable_as_off"] = False
-        hass.config_entries.async_update_entry(config_entry, data=new)
-        config_entry.version = 3
+        hass.config_entries.async_update_entry(config_entry, data=new, version=3)
+
     return True

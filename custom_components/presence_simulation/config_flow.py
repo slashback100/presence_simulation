@@ -15,7 +15,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 2
+    VERSION = 3
     data = None
     async def async_create_flow(handler, context, data):
             """Create flow."""
