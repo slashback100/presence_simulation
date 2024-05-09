@@ -48,19 +48,25 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         _LOGGER.debug("In init of switch - end")
 
     def update_config(self, config):
-        _LOGGER.debug("Config %s", config.data["switch"])
-        self.config = config
+        #self.config = config
+        _LOGGER.debug("Config data & options %s, %s", config.data, config.options)
+
+        conf = config.data
+        if config.options:
+            conf = config.options
+
+        _LOGGER.debug("Config %s", conf["switch"])
         elms = []
-        for elm in config.data["entities"].split(","):
+        for elm in conf["entities"].split(","):
             elms += [elm.strip()]
         self._entities = elms
-        self._random = int(config.data["random"])
-        self._interval = int(config.data["interval"])
-        self._delta = config.data["delta"]
-        self._restore = config.data["restore"]
-        self._unavailable_as_off = config.data.get("unavailable_as_off", False)
+        self._random = int(conf["random"])
+        self._interval = int(conf["interval"])
+        self._delta = conf["delta"]
+        self._restore = conf["restore"]
+        self._unavailable_as_off = conf.get("unavailable_as_off", False)
         self.reset_default_values()
-        _LOGGER.debug("entities %s", config.data["entities"])
+        _LOGGER.debug("entities %s", conf["entities"])
 
     @property
     def unique_id(self):

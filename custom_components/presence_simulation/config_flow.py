@@ -63,7 +63,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(entry):
-        _LOGGER.debug("entry %s", entry)
+        #_LOGGER.debug("entry %s", entry)
         return OptionsFlowHandler(entry)
 
 
