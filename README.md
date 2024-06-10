@@ -23,6 +23,8 @@ The `history` integration must be activated - [which it is by default](https://w
 # Tutorials
 - Smart Home Junkie's English tutorial: https://youtu.be/OTQu3BMr3EU
 - Tristan's Smartes Heim's German tutorial: https://youtu.be/5vCp3iKZb4Q
+- HectorziN Domótica's Spanish tutorial: https://www.youtube.com/watch?v=2N7aihhnkNg
+
 
 # Installation
 ## Option 1
