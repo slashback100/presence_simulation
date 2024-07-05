@@ -184,7 +184,8 @@ async def async_setup_entry(hass, entry):
                 await entity.set_start_datetime(datetime.now(hass.config.time_zone))
             except Exception as e:
                 try:
-                    await entity.set_start_datetime(datetime.now(pytz.timezone(hass.config.time_zone)))
+                    presence_timezone = await hass.async_add_executor_job(pytz.timezone, hass.config.time_zone)
+                    await entity.set_start_datetime(datetime.now(presence_timezone))
                 except Exception as e:
                     _LOGGER.warning("Start datetime could not be set to HA timezone: ", e)
                     await entity.set_start_datetime(datetime.now())
