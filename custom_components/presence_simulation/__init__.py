@@ -37,7 +37,7 @@ async def async_setup_entry(hass, entry):
 
     # Add sensor
     # Use `hass.async_create_task` to avoid a circular dependency between the platform and the component
-    hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SWITCH_PLATFORM))
+    hass.async_create_task(hass.config_entries.async_forward_entry_setups(entry, [SWITCH_PLATFORM]))
 
     previous_attribute = {}
 
