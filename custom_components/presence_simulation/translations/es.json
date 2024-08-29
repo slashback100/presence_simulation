@@ -1,0 +1,41 @@
+{
+    "title": "Simulación de Presencia",
+    "config": {
+      "error": {
+        "not_unique_name": "El nombre elegido para el interruptor ya está tomado por otra entidad, por favor elija un nuevo nombre"
+      },
+      "step": {
+        "user": {
+          "description": "Configuración",
+          "data": {
+            "switch": "El nombre del interruptor de simulación de presencia",
+            "entities": "Entidad o grupo de entidades",
+            "delta": "Delta (en días)",
+            "interval": "Intervalo de actualización (en segundos)",
+            "restore": "Restaurar estado después de la simulación",
+            "random": "Agregar un tiempo aleatorio para cambiar las entidades. Este parámetro define el tiempo máximo en segundos",
+            "unavailable_as_off": "Considerar el estado No Disponible como Apagado"
+          }
+        }
+      }
+    },
+    "options": {
+      "error": {
+        "cannot_change_name": "El nombre del interruptor no se puede cambiar"
+      },
+      "step": {
+        "init": {
+          "description": "Configuración",
+          "data": {
+            "switch": "El nombre del interruptor de simulación de presencia",
+            "entities": "Entidad o grupo de entidades",
+            "delta": "Delta (en días)",
+            "interval": "Intervalo de actualización (en segundos)",
+            "restore": "Restaurar estado después de la simulación",
+            "random": "Agregar un tiempo aleatorio para cambiar las entidades. Este parámetro define el tiempo máximo en segundos",
+            "unavailable_as_off": "Considerar el estado No Disponible como Apagado"
+          }
+        }
+      }
+    }
+  }
