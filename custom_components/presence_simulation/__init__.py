@@ -317,11 +317,11 @@ async def async_setup_entry(hass, entry):
             if not is_running(switch_id):
                 return # exit if state is false
             #call service to turn on/off the light
-            await update_entity(entity_id, state, entity.unavailable_as_off)
+            await update_entity(entity_id, state, entity.unavailable_as_off, entity.brightness)
             #and remove this event from the attribute list of the switch entity
             await entity.async_remove_event(entity_id)
 
-    async def update_entity(entity_id, state, unavailable_as_off):
+    async def update_entity(entity_id, state, unavailable_as_off, brightness):
         """ Switch the entity """
         # use service scene.apply ?? https://www.home-assistant.io/integrations/scene/
         """
@@ -351,6 +351,10 @@ async def async_setup_entry(hass, entry):
             # Preserve accurate color information, where applicable
             # see https://developers.home-assistant.io/docs/core/entity/light/#color-modes
             # see https://developers.home-assistant.io/docs/core/entity/light/#turn-on-light-device
+            # if sumulation was launched with a brightness parameter, force its usage
+            if brightness > 0:
+                service_data["brightness"] = brightness
+
             if "color_mode" in state.attributes and state.attributes["color_mode"] is not None:
                 _LOGGER.debug("Got attribute color_mode: %s", state.attributes["color_mode"])
                 color_mode = state.attributes["color_mode"]
@@ -492,10 +496,15 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
         hass.config_entries.async_update_entry(config_entry, data=new, unique_id=new_unique_id, version=2)
 
-    if config_entry.version == 2:
+    if config_entry.version == 2: #add unavailable states consider as off parameter
         _LOGGER.debug("Will migrate to version 3")
         new = {**config_entry.data}
         new["unavailable_as_off"] = False
         hass.config_entries.async_update_entry(config_entry, data=new, version=3)
 
+    if config_entry.version == 3: #add brightness parameter
+        _LOGGER.debug("Will migrate to version 4")
+        new = {**config_entry.data}
+        new["brightness"] = 0
+        hass.config_entries.async_update_entry(config_entry, data=new, version=4)
     return True

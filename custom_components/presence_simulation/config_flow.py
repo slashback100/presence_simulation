@@ -15,7 +15,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 3
+    VERSION = 4
     data = None
     async def async_create_flow(handler, context, data):
             """Create flow."""
@@ -33,6 +33,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("restore", default=False): bool,
             vol.Required("random", default=0): int,
             vol.Required("unavailable_as_off", default=False): bool,
+            vol.Required("brightness", default=0): int,
         }
         if not info:
             return self.async_show_form(
@@ -92,6 +93,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             unavailable_as_off = self.config_entry.data["unavailable_as_off"]
         else:
             unavailable_as_off = False
+        if "brightness" in self.config_entry.data:
+            brightness = self.config_entry.data["brightness"]
+        else:
+            brightness = 0
 
         data_schema = {
             vol.Required("switch", default=self.config_entry.data["switch"]): str,
@@ -101,6 +106,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("restore", default=restore): bool,
             vol.Required("random", default=random): int,
             vol.Required("unavailable_as_off", default=unavailable_as_off): bool,
+            vol.Required("brightness", default=brightness): int,
         }
         _LOGGER.debug("switch %s", self.config_entry.data["switch"])
         _LOGGER.debug("config_entry data %s", self.config_entry.data)

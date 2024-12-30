@@ -14,7 +14,8 @@
                     "interval": "Refresh interval (in seconds)",
                     "restore": "Restore state after simulation",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
-                    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off",
+					"brightness": "Brightness to be used if light allows the feature"
                 }
             }
         }
@@ -33,7 +34,8 @@
                     "interval": "Refresh interval (in seconds)",
                     "restore": "Restore state after simulation",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
-                    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off",
+					"brightness": "Brightness to be used if light allows the feature"
                 }
             }
         }
