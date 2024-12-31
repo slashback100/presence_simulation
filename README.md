@@ -27,14 +27,7 @@ The `history` integration must be activated - [which it is by default](https://w
 
 
 # Installation
-## Option 1
-- In your Home Assistant configuration directory (`~/.homeassistant` for instance), create a directory `custom_components/presence_simulation` and put the code in it.
-- Restart Home Assistant
-## Option 2
-- Go in your Home Assistant configuration directory (`~/.homeassistant` for instance)
-- `git clone https://github.com/slashback100/presence_simulation.git`. It will create the directory `custom_components/presence_simulation`
-- Restart Home Assistant
-## Option 3 (recommended)
+## Option 1 (recommended)
 - Have [HACS](https://hacs.xyz/) installed, this will allow you to easily manage and track updates.
 - You can either search for "Presence Simulation" or use this link [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=presence_simulation&category=Integration&owner=slashback100).
 - Click Install below the found integration.
@@ -42,12 +35,24 @@ The `history` integration must be activated - [which it is by default](https://w
 
 NB: it can also be added as a custom repository if you have an issue with above procedure
 
-# Configuration
-* In the UI, go in Configuration > Integration (or click here [![Open your Home Assistant instance and show your integrations.](https://my.home-assistant.io/badges/integrations.svg)](https://my.home-assistant.io/redirect/integrations/))
-* Click on the '+' button
-* Search for "Presence Simulation"
-* Confirm:
+## Option 2
+- In your Home Assistant configuration directory (`~/.homeassistant` for instance), create a directory `custom_components/presence_simulation` and put the code in it.
+- Restart Home Assistant
 
+## Option 3
+- Go in your Home Assistant configuration directory (`~/.homeassistant` for instance)
+- `git clone https://github.com/slashback100/presence_simulation.git`. It will create the directory `custom_components/presence_simulation`
+- Restart Home Assistant
+
+# Configuration
+* Simply click here : [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=presence_simulation) and click OK
+* If it doens't work, 
+  * In the UI, go in Configuration > Integration (or click here [![Open your Home Assistant instance and show your integrations.](https://my.home-assistant.io/badges/integrations.svg)](https://my.home-assistant.io/redirect/integrations/))
+  * Click on the '+' button
+  * Search for "Presence Simulation"
+  * Confirm
+
+You will now configure you first simulation :
 <p align="center">
   <img width="400px" src="https://github.com/slashback100/presence_simulation/raw/main/custom_components/presence_simulation/images/configFlow.png" alt="accessibility text">
 </p>
