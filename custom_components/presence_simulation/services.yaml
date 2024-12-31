@@ -23,6 +23,10 @@ start:
       name: Activate random
       description: Add a random factor (in seconds) to the historic events
       example: 300
+    brightness:
+      name: Set light brightness
+      description: Set a specific brightness fot lights that allows it
+      example: 75
 stop:
   description: Stop the presence simulation
   name: Presence simulation stop

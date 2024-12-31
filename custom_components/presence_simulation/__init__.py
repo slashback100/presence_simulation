@@ -142,6 +142,10 @@ async def async_setup_entry(hass, entry):
                     await entity.set_restore(call.data.get("restore_states", False))
                 if "random" in call.data:
                     await entity.set_random(call.data.get("random", 0))
+                if "unavailable_as_off" in call.data:
+                    await entity.set_unavailable_as_off(call.data.get("unavailable_as_off", 0))
+                if "brithness" in call.data:
+                    await entity.set_brightness(call.data.get("brightness", 0))
                 if "after_ha_restart" in call.data:
                     after_ha_restart = call.data.get("after_ha_restart", False)
         else: #if we are it is a call from the toggle service or from the turn_on action of the switch entity
@@ -341,7 +345,8 @@ async def async_setup_entry(hass, entry):
         # get the domain of the entity
         domain = entity_id.split('.')[0]
         #prepare the data of the services
-        service_data = {"entity_id": entity_id}
+        #service_data = {"entity_id": entity_id}
+        service_data = {}
         if domain == "light":
             #if it is a light, checking the brigthness & color
             _LOGGER.debug("Switching light %s to %s", entity_id, state.state)
@@ -352,8 +357,8 @@ async def async_setup_entry(hass, entry):
             # see https://developers.home-assistant.io/docs/core/entity/light/#color-modes
             # see https://developers.home-assistant.io/docs/core/entity/light/#turn-on-light-device
             # if sumulation was launched with a brightness parameter, force its usage
-            if brightness > 0:
-                service_data["brightness"] = brightness
+            if state.state == "on" and brightness > 0:
+                service_data["brightness_pct"] = brightness
 
             if "color_mode" in state.attributes and state.attributes["color_mode"] is not None:
                 _LOGGER.debug("Got attribute color_mode: %s", state.attributes["color_mode"])
@@ -366,7 +371,9 @@ async def async_setup_entry(hass, entry):
                     service_data[color_mode] = state.attributes[color_mode]
             if state.state == "on" or state.state == "off" or (state.state == "unavailable" and unavailable_as_off):
                 s = "on" if state.state == "on" else "off"
-                await hass.services.async_call("light", "turn_"+s, service_data, blocking=False)
+
+                _LOGGER.debug("calling service %s with target %s and data %s", "turn_"+s, {"entity_id": entity_id }, service_data)
+                await hass.services.async_call("light", service="turn_"+s, service_data=service_data, blocking=False, target={"entity_id": entity_id})
                 event_data = {"entity_id": entity_id, "service": "light.turn_"+s, "service_data": service_data}
             else:
                 _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)

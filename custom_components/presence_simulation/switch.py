@@ -65,7 +65,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._delta = conf["delta"]
         self._restore = conf["restore"]
         self._unavailable_as_off = conf.get("unavailable_as_off", False)
-        self._brightness = conf.get("brightness", 100)
+        self._brightness = conf.get("brightness", 0)
         self.reset_default_values()
         _LOGGER.debug("entities %s", conf["entities"])
 
