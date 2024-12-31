@@ -58,6 +58,7 @@ NB: it can also be added as a custom repository if you have an issue with above 
 * After the simulation, choose to restore the states as they were before the start of ths simulation
 * You can choose to randomize the activation/deactivation of your entities. '0' to disable this behaviour, a positive number (representing a number of seconds) to activate the behaviour. A random number of seconds limited to this parameter is added to (or substracted from) the time the entity was actually switched on or off in your historical data.
 * You can choose to consider 'Unavailable' states as 'Off' state (needed for some devices that are unavailable instead of off) 
+* You can choose a default brightness for lights (a number between 1 and 100)
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
@@ -85,6 +86,8 @@ entity_id:
 delta: 5
 restore_states: True
 random: 300
+unavailable_as_off: True
+brightness: 75
 ```
 ### Stop the simulation
 The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
