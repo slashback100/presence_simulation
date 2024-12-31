@@ -1,0 +1,41 @@
+{
+    "title": "Simulador de presència",
+    "config": {
+		"error": {
+			"not_unique_name": "El nom escollit per aquest interruptor ja s'està fent servir, feu servir un altre nom"
+		},
+        "step": {
+            "user":{
+                "description": "Configuració",
+                "data": {
+                    "switch": "El nom de l'interruptor del simulador de presència",
+                    "entities": "Entitat o grup d'entitats",
+                    "delta": "Delta (en dies)",
+                    "interval": "Interval d'actualització (en segons)",
+                    "restore": "Restaura l'estat després de la simulació",
+                    "random": "Afegir un temps aleatori per canviar les entitats. Aquest paràmetre defineix el nombre màxim de segons",
+                    "unavailable_as_off": "Considera l'estat No disponible com a Apagat"
+                }
+            }
+        }
+    },
+    "options": {
+		"error": {
+			"cannot_change_name": "No es pot canviar el nom de l'interruptor"
+		},
+        "step": {
+            "init":{
+                "description": "Configuració",
+                "data": {
+                    "switch": "El nom de l'interruptor del simulador de presència",
+                    "entities": "Entitat o grup d'entitats",
+                    "delta": "Delta (en dies)",
+                    "interval": "Interval d'actualització (en segons)",
+                    "restore": "Restaura l'estat després de la simulació",
+                    "random": "Afegir un temps aleatori per canviar les entitats. Aquest paràmetre defineix el nombre màxim de segons",
+                    "unavailable_as_off": "Considera l'estat No disponible com a Apagat"
+                }
+            }
+        }
+    }
+}
