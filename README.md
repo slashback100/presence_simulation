@@ -63,7 +63,7 @@ You will now configure you first simulation :
 * After the simulation, choose to restore the states as they were before the start of ths simulation
 * You can choose to randomize the activation/deactivation of your entities. '0' to disable this behaviour, a positive number (representing a number of seconds) to activate the behaviour. A random number of seconds limited to this parameter is added to (or substracted from) the time the entity was actually switched on or off in your historical data.
 * You can choose to consider 'Unavailable' states as 'Off' state (needed for some devices that are unavailable instead of off) 
-* You can choose a default brightness for lights (a number between 1 and 100)
+* You can choose a default brightness for lights (a number between 1 and 100, 0 means that the britghness will not be set during simulation -> lights will keep their last brightness value)
 
 You can edit these configurations afterwards by clicking on Options in the integration screen.
 
