@@ -388,33 +388,33 @@ async def async_setup_entry(hass, entry):
                 blocking = False
             if state.state == "closed" or (state.state == "unavailable" and unavailable_as_off):
                 _LOGGER.debug("Closing cover %s", entity_id)
-                await hass.services.async_call("cover", "close_cover", service_data, blocking=blocking)
+                await hass.services.async_call("cover", "close_cover", service_data, blocking=blocking, target={"entity_id": entity_id})
                 event_data = {"entity_id": entity_id, "service": "cover.close_cover", "service_data": service_data}
             elif state.state == "open":
                 if "current_position" in state.attributes:
                     service_data["position"] = state.attributes["current_position"]
                     _LOGGER.debug("Changing cover %s position to %s", entity_id, state.attributes["current_position"])
-                    await hass.services.async_call("cover", "set_cover_position", service_data, blocking=blocking)
+                    await hass.services.async_call("cover", "set_cover_position", service_data, blocking=blocking, target={"entity_id": entity_id})
                     event_data = {"entity_id": entity_id, "service": "cover.set_cover_position", "service_data": service_data}
                     del service_data["position"]
                 else: #no position info, just open it
                     _LOGGER.debug("Opening cover %s", entity_id)
-                    await hass.services.async_call("cover", "open_cover", service_data, blocking=blocking)
+                    await hass.services.async_call("cover", "open_cover", service_data, blocking=blocking, target={"entity_id": entity_id})
                     event_data = {"entity_id": entity_id, "service": "cover.open_cover", "service_data": service_data}
             if state.state in ["closed", "open"]: #nothing to do if closing or opening. Wait for the status to be 'stabilized'
                 if "current_tilt_position" in state.attributes:
                     service_data["tilt_position"] = state.attributes["current_tilt_position"]
                     _LOGGER.debug("Changing cover %s tilt position to %s", entity_id, state.attributes["current_tilt_position"])
-                    await hass.services.async_call("cover", "set_cover_tilt_position", service_data, blocking=False)
+                    await hass.services.async_call("cover", "set_cover_tilt_position", service_data, blocking=False, target={"entity_id": entity_id})
                     event_data = {"entity_id": entity_id, "service": "cover.set_cover_tilt_position", "service_data": service_data}
                     del service_data["tilt_position"]
         elif domain == "media_player":
             _LOGGER.debug("Switching media_player %s to %s", entity_id, state.state)
             if state.state == "playing":
-                await hass.services.async_call("media_player", "media_play", service_data, blocking=False)
+                await hass.services.async_call("media_player", "media_play", service_data, blocking=False, target={"entity_id": entity_id})
                 event_data = {"entity_id": entity_id, "service": "media_player.media_play", "service_data": service_data}
             elif state.state != "unavailable" or unavailable_as_off: #idle, paused, off
-                await hass.services.async_call("media_player", "media_stop", service_data, blocking=False)
+                await hass.services.async_call("media_player", "media_stop", service_data, blocking=False, target={"entity_id": entity_id})
                 event_data = {"entity_id": entity_id, "service": "media_player.media_stop", "service_data": service_data}
             else:
                 _LOGGER.debug("State in unavailable, do nothing")
@@ -423,7 +423,7 @@ async def async_setup_entry(hass, entry):
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
             if state.state == "on" or state.state == "off" or (state.state == "unavailable_as_off" and unavailable_as_off):
                 s = "on" if state.state == "on" else "off"
-                await hass.services.async_call("homeassistant", "turn_"+s, service_data, blocking=False)
+                await hass.services.async_call("homeassistant", "turn_"+s, service_data, blocking=False, target={"entity_id": entity_id})
                 event_data = {"entity_id": entity_id, "service": "homeassistant.turn_"+s, "service_data": service_data}
             else:
                 _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
