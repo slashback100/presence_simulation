@@ -60,6 +60,10 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         for elm in conf["entities"].split(","):
             elms += [elm.strip()]
         self._entities = elms
+        if "labels" in conf:
+            self._labels = conf["labels"]
+        else:
+            seld._labels = []
         self._random = int(conf["random"])
         self._interval = int(conf["interval"])
         self._delta = conf["delta"]
@@ -134,6 +138,9 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
                     del self.attr[prop]
 
     @property
+    def labels(self):
+        return self._labels_overriden
+    @property
     def entities(self):
         return self._entities_overriden
     @property
@@ -157,6 +164,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
 
     async def reset_default_values_async(self):
         self._entities_overriden = self._entities
+        self._labels_overriden = self._labels
         self._random_overriden = self._random
         self._restore_overriden = self._restore
         self._delta_overriden = self._delta
@@ -165,6 +173,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
 
     def reset_default_values(self):
         self._entities_overriden = self._entities
+        self._labels_overriden = self._labels
         self._random_overriden = self._random
         self._restore_overriden = self._restore
         self._delta_overriden = self._delta
@@ -195,6 +204,8 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
                 _LOGGER.debug("State was on")
                 if "entity_id" in state.attributes:
                     self._entities_overriden = state.attributes["entity_id"]
+                if "labels" in state.attributes:
+                    self._labels_overriden = state.attributes["labels"]
                 if "random" in state.attributes:
                     self._random_overriden = state.attributes["random"]
                 if "delta" in state.attributes:
@@ -231,6 +242,11 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self.attr["delta"] = delta
         self._delta_overriden = delta
 
+    async def set_labels(self, labels):
+        _LOGGER.debug("overidding labels %s", labels)
+        self.attr["labels"] = labels
+        self._labels_overriden = labels
+
     async def set_entities(self, entities):
         _LOGGER.debug("overidding entities %s", entities)
         self.attr["entity_id"] = entities
@@ -263,6 +279,10 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
     async def reset_delta(self):
         if "delta" in self.attr:
             del self.attr["delta"]
+
+    async def reset_labels(self):
+        if "labels" in self.attr:
+            del self.attr["labels"]
 
     async def reset_entities(self):
         if "entity_id" in self.attr:

@@ -3,6 +3,8 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    LabelSelector,
+    LabelSelectorConfig
 )
 import re
 import logging
@@ -15,7 +17,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 4
+    VERSION = 5
     data = None
     async def async_create_flow(handler, context, data):
             """Create flow."""
@@ -28,6 +30,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = {
             vol.Required("switch", description={"suggested_value": "Choose a unique name"}): str,
             vol.Required("entities"): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
+            vol.Required("labels"): LabelSelector(LabelSelectorConfig(multiple=True)),
             vol.Required("delta", default=7): int,
             vol.Required("interval", default=30): int,
             vol.Required("restore", default=False): bool,
@@ -51,6 +54,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.data = info
         try:
             _LOGGER.debug("info.entities %s",info['entities'])
+            _LOGGER.debug("info.labels %s",info['labels'])
             #check if entity exist
             #hass.states.get(info['entities'])
         except Exception as e:
@@ -101,6 +105,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         data_schema = {
             vol.Required("switch", default=self.config_entry.data["switch"]): str,
             vol.Required("entities", default=self.config_entry.data["entities"].split(",")): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
+            vol.Required("labels", default=self.config_entry.data["labels"]): LabelSelector(LabelSelectorConfig(multiple=True)),
             vol.Required("delta", default=self.config_entry.data["delta"]): int,
             vol.Required("interval", default=interval): int,
             vol.Required("restore", default=restore): bool,

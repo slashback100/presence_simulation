@@ -6,6 +6,10 @@ import asyncio
 import pytz
 import re
 import random
+from homeassistant.helpers import (
+        label_registry as lr,
+        entity_registry as er
+)
 from datetime import datetime,timedelta,timezone
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.components.recorder import get_instance
@@ -52,6 +56,7 @@ async def async_setup_entry(hass, entry):
             #empty the start_datetime  attribute
             await entity.reset_start_datetime()
             await entity.reset_entities()
+            await entity.reset_labels()
             await entity.reset_delta()
             await entity.reset_random()
             # if the scene exist, turn it on
@@ -88,6 +93,23 @@ async def async_setup_entry(hass, entry):
             await stop_presence_simulation(restart=restart, switch_id=switch_id)
         else:
             _LOGGER.warning("Presence simulation switch %s is not on, can't be turned off", switch_id)
+
+    async def async_expand_labels(labels):
+        labels_new = []
+        _LOGGER.debug("expand labels %s", labels)
+        label_reg = lr.async_get(hass)
+        entity_reg = er.async_get(hass)
+        for label_str in labels:
+            _LOGGER.debug("expand label %s", label_str)
+            #to make it asyncable, not sure it is needed
+            await asyncio.sleep(0)
+            if label := label_reg.async_get_label(label_str):
+                _LOGGER.debug("expand label_id %s", label.label_id)
+                for entry in er.async_entries_for_label(entity_reg, label.label_id):
+                    _LOGGER.debug("expand entry %s", entry.entity_id)
+                    labels_new += [entry.entity_id]
+
+        return labels_new
 
     async def async_expand_entities(entities):
         """If the entity is a group, return the list of the entities within, otherwise, return the entity"""
@@ -136,6 +158,8 @@ async def async_setup_entry(hass, entry):
                         await entity.set_entities(call.data.get("entity_id"))
                     else:
                         await entity.set_entities([call.data.get("entity_id")])
+                if "labels" in call.data:
+                    await entity.set_labels(call.data.get("labels"))
                 if "delta" in call.data:
                     await entity.set_delta(call.data.get("delta", 7))
                 if "restore_states" in call.data:
@@ -169,6 +193,12 @@ async def async_setup_entry(hass, entry):
         except Exception as e:
             _LOGGER.error("Error during identifing entities: "+entity.entities)
             return
+        try:
+            expanded_labels = await async_expand_labels(entity.labels)
+        except Exception as e:
+            _LOGGER.error("Error during identifing labels: "+entity.labels)
+            return
+        expanded_entities+=expanded_labels
 
         if len(expanded_entities) == 0:
             _LOGGER.error("Error during identifing entities, no valid entities has been found")
@@ -514,4 +544,10 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         new = {**config_entry.data}
         new["brightness"] = 0
         hass.config_entries.async_update_entry(config_entry, data=new, version=4)
+
+    if config_entry.version == 4: #add labels parameter
+        _LOGGER.debug("Will migrate to version 5")
+        new = {**config_entry.data}
+        new["labels"] = []
+        hass.config_entries.async_update_entry(config_entry, data=new, version=5)
     return True
