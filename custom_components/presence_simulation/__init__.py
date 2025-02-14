@@ -448,7 +448,24 @@ async def async_setup_entry(hass, entry):
                 event_data = {"entity_id": entity_id, "service": "media_player.media_stop", "service_data": service_data}
             else:
                 _LOGGER.debug("State in unavailable, do nothing")
+        elif domain == "input_select":
+            _LOGGER.debug(
+                "Setting input select option %s to %s", entity_id, state.state
+            )
 
+            service_data = {"entity_id": entity_id, "option": state.state}
+            await hass.services.async_call(
+                "input_select",
+                "select_option",
+                service_data,
+                blocking=False,
+            )
+            event_data = {
+                "entity_id": entity_id,
+                "service": "input_select.select_option",
+                "service_data": service_data,
+            }
+        
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
             if state.state == "on" or state.state == "off" or (state.state == "unavailable_as_off" and unavailable_as_off):
