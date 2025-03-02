@@ -15,6 +15,7 @@ Supported entities domains:
 - `light`
 - `cover`
 - `media_player`
+- `input_select`
 - All domains for which entities have status `on` or `off` than can be turned on/off with service `homeassistant.turn_on` and `homeassistant.turn_off` (`automation`, `switch`, `group`...).
 
 # Pre-requisit
