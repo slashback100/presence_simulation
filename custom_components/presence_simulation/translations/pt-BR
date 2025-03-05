@@ -1,0 +1,43 @@
+{
+    "title": "Simulação de Presença",
+    "config": {
+		"error": {
+			"not_unique_name": "O nome do interruptor escolhido já está sendo utilizado por outra entidade, por favor escolha um novo nome"
+		},
+        "step": {
+            "user":{
+                "description": "Configuração",
+                "data": {
+                    "switch": "O nome do interruptor de simulação de presença",
+                    "entities": "Entidade ou grupo de entidades",
+                    "delta": "Delta (em dias)",
+                    "interval": "Intervalo de atualização (em segundos)",
+                    "restore": "Restaure os estados após a simulação",
+                    "random": "Adicione um tempo aleatório para alterar estado das entidades. Esse parametro define o tempo máximo em segundos",
+                    "unavailable_as_off": "Considerar indisponível como Desligado",
+					"brightness": "Bilho a ser usado se a luz permitir essa configuração"
+                }
+            }
+        }
+    },
+    "options": {
+		"error": {
+			"cannot_change_name": "O nome do interruptor não pode ser alterado"
+		},
+        "step": {
+            "init":{
+                "description": "Configuração",
+                "data": {
+                    "switch": "O nome do interruptor de simulação de presença",
+                    "entities": "Entidade ou grupo de entidades",
+                    "delta": "Delta (em dias)",
+                    "interval": "Intervalo de atualização (em segundos)",
+                    "restore": "Restaure os estados após a simulação",
+                    "random": "Adicione um tempo aleatório para alterar estado das entidades. Esse parametro define o tempo máximo em segundos",
+                    "unavailable_as_off": "Considerar indisponível como Desligado",
+					"brightness": "Bilho a ser usado se a luz permitir essa configuração"
+                }
+            }
+        }
+    }
+}
