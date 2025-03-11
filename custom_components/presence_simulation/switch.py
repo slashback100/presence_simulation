@@ -63,7 +63,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         if "labels" in conf:
             self._labels = conf["labels"]
         else:
-            seld._labels = []
+            self._labels = []
         self._random = int(conf["random"])
         self._interval = int(conf["interval"])
         self._delta = conf["delta"]
