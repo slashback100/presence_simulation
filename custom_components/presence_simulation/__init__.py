@@ -63,10 +63,10 @@ async def async_setup_entry(hass, entry):
             # TODO check to improve, won't work if you launch one time is the restore state and then after without it.
             #Can not just take restoreAfterStop cause if it is overriden in the service call, restoreAfterStop is not update
             _LOGGER.debug("entity.restore_states %s", entity.restore)
-            scene = hass.states.get(SCENE_PLATFORM+"."+switch_id.replace(".", "_")+"_"+RESTORE_SCENE)
+            scene = hass.states.get(SCENE_PLATFORM+"."+(await get_scene_name(switch_id)))
             if scene is not None and entity.restore:
                 service_data = {}
-                service_data["entity_id"] = SCENE_PLATFORM+"."+switch_id.replace(".", "_")+"_"+RESTORE_SCENE
+                service_data["entity_id"] = SCENE_PLATFORM+"."+(await get_scene_name(switch_id))
                 _LOGGER.debug("Restoring scene after the simulation")
                 try:
                     await hass.services.async_call("scene", "turn_on", service_data, blocking=False)
@@ -77,6 +77,10 @@ async def async_setup_entry(hass, entry):
         if err is not None:
             _LOGGER.debug("Error in presence simulation, exiting")
             raise e
+    async def get_scene_name(switch_id):
+        tmp = switch_id.replace(".", "_")+"_"+RESTORE_SCENE
+        return re.sub(r'_+', '_', tmp)
+
 
     async def handle_stop_presence_simulation(call, restart=False, switch_id=None):
         """Stop the presence simulation"""
@@ -225,7 +229,7 @@ async def async_setup_entry(hass, entry):
                     await entity.set_start_datetime(datetime.now())
             if entity.restore and not after_ha_restart:
                 service_data = {}
-                service_data["scene_id"] = switch_id.replace(".", "_")+"_"+RESTORE_SCENE
+                service_data["scene_id"] = await get_scene_name(switch_id)
                 service_data["snapshot_entities"] = expanded_entities
                 _LOGGER.debug("Saving scene before launching the simulation")
                 try:
@@ -465,7 +469,7 @@ async def async_setup_entry(hass, entry):
                 "service": "input_select.select_option",
                 "service_data": service_data,
             }
-        
+
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
             if state.state == "on" or state.state == "off" or (state.state == "unavailable_as_off" and unavailable_as_off):
