@@ -210,7 +210,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
                     self._random_overriden = state.attributes["random"]
                 if "delta" in state.attributes:
                     self._delta_overriden = state.attributes["delta"]
-                if "restore_sates" in state.attributes:
+                if "restore_states" in state.attributes:
                     self._restore_overriden = state.attributes["restore_states"]
                 if "unavailable_as_off" in state.attributes:
                     self._unavailable_as_off_overriden = state.attributes["unavailable_as_off"]
