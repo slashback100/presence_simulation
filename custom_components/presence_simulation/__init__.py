@@ -472,7 +472,7 @@ async def async_setup_entry(hass, entry):
 
         else:
             _LOGGER.debug("Switching entity %s to %s", entity_id, state.state)
-            if state.state == "on" or state.state == "off" or (state.state == "unavailable_as_off" and unavailable_as_off):
+            if state.state == "on" or state.state == "off" or (state.state == "unavailable" and unavailable_as_off):
                 s = "on" if state.state == "on" else "off"
                 await hass.services.async_call("homeassistant", "turn_"+s, service_data, blocking=False, target={"entity_id": entity_id})
                 event_data = {"entity_id": entity_id, "service": "homeassistant.turn_"+s, "service_data": service_data}
