@@ -10,12 +10,18 @@ from homeassistant.helpers.selector import (
 import re
 import logging
 import voluptuous as vol
-from .const import DOMAIN
+from .const import DOMAIN, DEFAULT_DELTA, DEFAULT_INTERVAL
 from .const import (
         SWITCH_PLATFORM
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+DELTA_VALIDATOR = vol.All(vol.Coerce(int), vol.Range(min=1, max=365))
+INTERVAL_VALIDATOR = vol.All(vol.Coerce(int), vol.Range(min=5, max=3600))
+RANDOM_VALIDATOR = vol.All(vol.Coerce(int), vol.Range(min=0, max=86400))
+BRIGHTNESS_VALIDATOR = vol.All(vol.Coerce(int), vol.Range(min=0, max=100))
+
 
 class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 5
@@ -32,12 +38,12 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("switch", description={"suggested_value": "Choose a unique name"}): str,
             vol.Required("entities"): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
             vol.Required("labels"): LabelSelector(LabelSelectorConfig(multiple=True)),
-            vol.Required("delta", default=7): int,
-            vol.Required("interval", default=30): int,
+            vol.Required("delta", default=DEFAULT_DELTA): DELTA_VALIDATOR,
+            vol.Required("interval", default=DEFAULT_INTERVAL): INTERVAL_VALIDATOR,
             vol.Required("restore", default=False): bool,
-            vol.Required("random", default=0): int,
+            vol.Required("random", default=0): RANDOM_validator,
             vol.Required("unavailable_as_off", default=False): bool,
-            vol.Required("brightness", default=0): int,
+            vol.Required("brightness", default=0): BRIGHTNESS_validator,
         }
         if not info:
             return self.async_show_form(
@@ -109,12 +115,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("switch", default=switch_val): str,
             vol.Required("entities", default=entities_val.split(",")): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
             vol.Required("labels", default=labels_val): LabelSelector(LabelSelectorConfig(multiple=True)),
-            vol.Required("delta", default=delta_val): int,
-            vol.Required("interval", default=interval): int,
+            vol.Required("delta", default=delta_val): DELTA_VALIDATOR,
+            vol.Required("interval", default=interval): INTERVAL_VALIDATOR,
             vol.Required("restore", default=restore): bool,
-            vol.Required("random", default=random): int,
+            vol.Required("random", default=random): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=unavailable_as_off): bool,
-            vol.Required("brightness", default=brightness): int,
+            vol.Required("brightness", default=brightness): BRIGHTNESS_VALIDATOR,
         }
         _LOGGER.debug("switch %s", self.config_entry.data["switch"])
         _LOGGER.debug("config_entry data %s", self.config_entry.data)
