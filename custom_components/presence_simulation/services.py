@@ -1,13 +1,14 @@
+"""Service handlers for presence simulation."""
+
 import logging
 import asyncio
 import pytz
-import re
 import random
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from typing import Any, Callable, Dict, List, Optional
 
+from homeassistant.core import HomeAssistant, Context
 from homeassistant.helpers import label_registry as lr, entity_registry as er
-from homeassistant.core import Context
 
 from .const import DOMAIN, SWITCH_PLATFORM, RESTORE_SCENE, SCENE_PLATFORM, MY_EVENT, MIN_DELAY
 from .history import HistoryManager
@@ -21,10 +22,10 @@ class PresenceSimulationServices:
 
     def __init__(
         self,
-        hass: Any,
-        get_switch_entity: callable,
-        is_running: callable,
-        system_user: Any,
+        hass: HomeAssistant,
+        get_switch_entity: Callable[[], Dict[str, Any]],
+        is_running: Callable[[str], bool],
+        system_user: Optional[Any],
     ):
         self._hass = hass
         self._get_switch_entity = get_switch_entity
@@ -38,6 +39,7 @@ class PresenceSimulationServices:
     def _get_scene_name(switch_id: str) -> str:
         """Generate scene name for restore."""
         tmp = switch_id.replace(".", "_") + "_" + RESTORE_SCENE
+        import re
         return re.sub(r'_+', '_', tmp)
 
     async def start_simulation(
@@ -49,9 +51,10 @@ class PresenceSimulationServices:
         """Start the presence simulation."""
         after_ha_restart = False
         if call is not None:
-            _LOGGER.debug("All Switches: %s", self._get_switch_entity())
-            for id in self._get_switch_entity():
-                _LOGGER.debug(self._get_switch_entity()[id])
+            switches = self._get_switch_entity()
+            _LOGGER.debug("All Switches: %s", switches)
+            for sid in switches:
+                _LOGGER.debug(switches[sid])
 
             if "switch_id" in call.data:
                 switch_id = call.data.get("switch_id")
@@ -134,12 +137,14 @@ class PresenceSimulationServices:
                     await entity.set_start_datetime(datetime.now())
 
             if entity.restore and not after_ha_restart:
-                service_data = {}
+                service_data: Dict[str, Any] = {}
                 service_data["scene_id"] = self._get_scene_name(switch_id)
                 service_data["snapshot_entities"] = expanded_entities
                 _LOGGER.debug("Saving scene before launching the simulation")
                 try:
-                    context = Context(user_id=self._system_user.id if self._system_user else None)
+                    context = Context(
+                        user_id=self._system_user.id if self._system_user else None
+                    )
                     await self._hass.services.async_call(
                         "scene", "create", service_data, blocking=True, context=context
                     )
@@ -150,9 +155,6 @@ class PresenceSimulationServices:
                     )
 
         _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
-
-        def on_history_received(history):
-            self._handle_history(switch_id, history, expanded_entities)
 
         from homeassistant.components.recorder import get_instance
 
@@ -166,7 +168,12 @@ class PresenceSimulationServices:
         )
 
     def _fetch_and_handle_history(
-        self, hass: Any, minus_delta: datetime, expanded_entities: list, switch_id: str, call: Any
+        self,
+        hass: HomeAssistant,
+        minus_delta: datetime,
+        expanded_entities: List[str],
+        switch_id: str,
+        call: Optional[Any],
     ) -> None:
         """Fetch history and dispatch to entity simulators."""
         history = HistoryManager.get_history(hass, minus_delta, expanded_entities)
@@ -196,7 +203,7 @@ class PresenceSimulationServices:
         self,
         switch_id: str,
         entity_id: str,
-        hist: list,
+        hist: List[Any],
         delta: int,
         random_val: int,
     ) -> None:
@@ -230,7 +237,7 @@ class PresenceSimulationServices:
                         "Random feature is used and wait is below min --> wait min time instead. target_time before %s",
                         target_time,
                     )
-                    target_time = datetime.now(timezone.utc) + timedelta(MIN_DELAY / 60 / 60 / 24)
+                    target_time = datetime.now(timezone.utc) + timedelta(seconds=MIN_DELAY)
                     _LOGGER.debug("target_time after %s", target_time)
                 else:
                     _LOGGER.debug(
@@ -301,7 +308,7 @@ class PresenceSimulationServices:
                 SCENE_PLATFORM + "." + self._get_scene_name(switch_id)
             )
             if scene is not None and entity.restore:
-                service_data = {}
+                service_data: Dict[str, Any] = {}
                 service_data["entity_id"] = (
                     SCENE_PLATFORM + "." + self._get_scene_name(switch_id)
                 )
@@ -356,9 +363,9 @@ class PresenceSimulationServices:
             await self.stop_simulation(call, restart=True, switch_id=switch_id)
             await self.start_simulation(call, restart=True, switch_id=switch_id)
 
-    async def _expand_entities(self, entities: list) -> list:
+    async def _expand_entities(self, entities: List[str]) -> List[str]:
         """Expand group entities to their member entities."""
-        entities_new = []
+        entities_new: List[str] = []
         for entity in entities:
             await asyncio.sleep(0)
             if self._hass.states.get(entity) is None:
@@ -380,9 +387,9 @@ class PresenceSimulationServices:
                     entities_new.append(entity)
         return entities_new
 
-    async def _expand_labels(self, labels: list) -> list:
+    async def _expand_labels(self, labels: List[str]) -> List[str]:
         """Expand labels to entity IDs."""
-        labels_new = []
+        labels_new: List[str] = []
         _LOGGER.debug("expand labels %s", labels)
         label_reg = lr.async_get(self._hass)
         entity_reg = er.async_get(self._hass)
@@ -396,14 +403,14 @@ class PresenceSimulationServices:
                     labels_new.append(entry.entity_id)
         return labels_new
 
-    async def handle_service_start(self, call):
+    async def handle_service_start(self, call: Any) -> None:
         """Service handler for start."""
         await self.start_simulation(call, False, None)
 
-    async def handle_service_stop(self, call):
+    async def handle_service_stop(self, call: Any) -> None:
         """Service handler for stop."""
         await self.stop_simulation(call, False, None)
 
-    async def handle_service_toggle(self, call):
+    async def handle_service_toggle(self, call: Any) -> None:
         """Service handler for toggle."""
         await self.toggle_simulation(call)

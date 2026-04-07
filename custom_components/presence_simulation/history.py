@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Dict, List
 from datetime import datetime
+from homeassistant.core import HomeAssistant
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.components.recorder import get_instance
 
@@ -19,7 +20,7 @@ class HistoryManager:
         if filter_out_unavailable:
             states_to_remove.append("unavailable")
 
-        filtered = {}
+        filtered: Dict[str, List[Any]] = {}
         for entity_id, states in history.items():
             filtered_states = [
                 state for state in states if state.state not in states_to_remove
@@ -32,7 +33,7 @@ class HistoryManager:
 
     @staticmethod
     def get_history(
-        hass: Any,
+        hass: HomeAssistant,
         start_time: datetime,
         entity_ids: List[str],
     ) -> Dict[str, List[Any]]:
@@ -50,7 +51,7 @@ class HistoryManager:
 
     @staticmethod
     def fetch_history_sync(
-        hass: Any,
+        hass: HomeAssistant,
         start_time: datetime,
         entity_ids: List[str],
     ) -> Dict[str, List[Any]]:
