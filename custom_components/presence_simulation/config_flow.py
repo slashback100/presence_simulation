@@ -1,3 +1,4 @@
+from typing import Dict
 from homeassistant import config_entries
 from homeassistant.helpers.selector import (
     SelectSelector,
@@ -18,11 +19,11 @@ _LOGGER = logging.getLogger(__name__)
 
 class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 5
-    data = None
-    async def async_create_flow(handler, context, data):
-            """Create flow."""
-    async def async_finish_flow(flow, result):
-            """Finish flow."""
+
+    def __init__(self):
+        super().__init__()
+        self.data: dict = {}
+
     async def async_step_user(self, info=None):
         errors: Dict[str, str] = {}
         all_entities = self.hass.states.async_entity_ids()
@@ -64,42 +65,38 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         else:
             self.data["entities"] = ",".join(self.data["entities"])
-            return self.async_create_entry(title="Simulation Presence", data=self.data)
+            return self.async_create_entry(title="Simulation Presence", data=self.data, options=self.data)
 
     @staticmethod
     def async_get_options_flow(entry):
-        #_LOGGER.debug("entry %s", entry)
         return OptionsFlowHandler()
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    #def __init__(self, config_entry):
-        #self.config_entry = config_entry
-        #pass
 
     async def async_step_init(self, info=None):
         errors: Dict[str, str] = {}
         _LOGGER.debug("config flow init %s", info)
         all_entities = self.hass.states.async_entity_ids()
 
-        if "interval" in self.config_entry.data:
-            interval = self.config_entry.data["interval"]
+        if "interval" in self.config_entry.options:
+            interval = self.config_entry.options["interval"]
         else:
             interval = 30
-        if "restore" in self.config_entry.data:
-            restore = self.config_entry.data["restore"]
+        if "restore" in self.config_entry.options:
+            restore = self.config_entry.options["restore"]
         else:
             restore = 0
-        if "random" in self.config_entry.data:
-            random = self.config_entry.data["random"]
+        if "random" in self.config_entry.options:
+            random = self.config_entry.options["random"]
         else:
             random = 0
-        if "unavailable_as_off" in self.config_entry.data:
-            unavailable_as_off = self.config_entry.data["unavailable_as_off"]
+        if "unavailable_as_off" in self.config_entry.options:
+            unavailable_as_off = self.config_entry.options["unavailable_as_off"]
         else:
             unavailable_as_off = False
-        if "brightness" in self.config_entry.data:
-            brightness = self.config_entry.data["brightness"]
+        if "brightness" in self.config_entry.options:
+            brightness = self.config_entry.options["brightness"]
         else:
             brightness = 0
 
@@ -116,7 +113,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         }
         _LOGGER.debug("switch %s", self.config_entry.data["switch"])
         _LOGGER.debug("config_entry data %s", self.config_entry.data)
-        _LOGGER.debug("will async_show_form")
+        _LOGGER.debug("config_entry options %s", self.config_entry.options)
 
         if not info:
             return self.async_show_form(
@@ -132,4 +129,5 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             )
 
         info["entities"] = ",".join(info["entities"])
-        return self.async_create_entry(title="Simulation Presence", data=info)
+        self.hass.config_entries.async_update_entry(self.config_entry, options=info)
+        return self.async_abort(reason="")

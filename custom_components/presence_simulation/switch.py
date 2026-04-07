@@ -107,24 +107,16 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
 
     async def async_update(self):
         """Update the attributes in regards to the list of next events"""
-        if len(self._next_events) > 0:
-            self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = self._next_events[0] #list is sorted
-            try:
-                self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(self.hass.config.time_zone).strftime("%d/%m/%Y %H:%M:%S")
-            except Exception as e:
-                try:
-                    self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(pytz.timezone(self.hass.config.time_zone)).strftime("%d/%m/%Y %H:%M:%S")
-                except Exception as e:
-                    _LOGGER.warning("Exception while trying to convert utc to local time: %s",e)
-        else:
-            for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
-                if prop in self.attr:
-                    del self.attr[prop]
+        self._update_attributes()
 
     def update(self):
         """Update the attributes in regards to the list of next events"""
+        self._update_attributes()
+
+    def _update_attributes(self):
+        """Common method to update attributes from next events."""
         if len(self._next_events) > 0:
-            self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = self._next_events[0] #list is sorted
+            self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = self._next_events[0]
             try:
                 self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(self.hass.config.time_zone).strftime("%d/%m/%Y %H:%M:%S")
             except Exception as e:
