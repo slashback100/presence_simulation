@@ -1,5 +1,5 @@
 {
-    "title": "Simulation der Anwesenheit",
+    "title": "Anwesenheitssimulation",
     "config": {
 		"error": {
 			"not_unique_name": "Der gewählte Name für den Schalter ist bereits in Verwendung durch eine andere Entität, bitte wähle einen neuen Namen."
@@ -8,13 +8,14 @@
             "user":{
                 "description": "Konfiguration",
                 "data": {
-                    "switch": "The name of the presence simulation switch",
+                    "switch": "Name des Schalters für die Anwesenheitssimulation",
                     "entities": "Entität oder Gruppe von Entitäten",
                     "delta": "Unterschied (in Tagen)",
                     "interval": "Aktualisierungs-Intervall (in Sekunden)",
                     "restore": "Zustand nach Simulation wiederherstellen",
                     "random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden",
-                    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Status 'Nicht verfügbar' entspricht 'Aus‘",
+					"brightness": "Zu verwendende Helligkeit, wenn die Lampe dies unterstützt"
                 }
             }
         }
@@ -27,13 +28,14 @@
             "init":{
                 "description": "Konfiguration",
                 "data": {
-                    "switch": "The name of the presence simulation switch",
+                    "switch": "Name des Schalters für die Anwesenheitssimulation",
                     "entities": "Entität oder Gruppe von Entitäten",
                     "delta": "Unterschied (in Tagen)",
                     "interval": "Aktualisierungs-Intervall (in Sekunden)",
                     "restore": "Zustand nach Simulation wiederherstellen",
                     "random": "Zufallszeit für das Umschalten von Entitäten hinzufügen. Dieser Parameter definiert die maximale Zeit in Sekunden",
-                    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Status 'Nicht verfügbar' entspricht 'Aus‘",
+					"brightness": "Zu verwendende Helligkeit, wenn die Lampe dies unterstützt"
                 }
             }
         }
