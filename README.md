@@ -16,10 +16,16 @@ Supported entities domains:
 - `cover`
 - `media_player`
 - `input_select`
-- All domains for which entities have status `on` or `off` than can be turned on/off with service `homeassistant.turn_on` and `homeassistant.turn_off` (`automation`, `switch`, `group`...).
+- All domains for which entities have status `on` or `off` that can be turned on/off with service `homeassistant.turn_on` and `homeassistant.turn_off` (`automation`, `switch`, `group`...).
 
 # Pre-requisit
 The `history` integration must be activated - [which it is by default](https://www.home-assistant.io/integrations/history/). The period kept in the DB should be bigger than the delta used in the simulation. The default number of days kept is 10 and this [can be configured](https://www.home-assistant.io/integrations/recorder/) with the `recorder` integration.
+
+## Light Attributes (Optional)
+
+To simulate light brightness changes and color temperature changes, attribute data must be stored in the [recorder](https://www.home-assistant.io/integrations/recorder/) database. Without these attributes, presence_simulation will only simulate the action of turning lights on and off.
+
+The Home Assistant component [Light Reilluminator](https://github.com/ronaldheft/ha-light-reilluminator) can be installed alongside presence_simulation to store light attributes. This component will enable presence_simulation to turn lights on at their previous set brightness and color temperature values and update their values as they change.
 
 # Tutorials
 - Smart Home Junkie's English tutorial: https://youtu.be/OTQu3BMr3EU
