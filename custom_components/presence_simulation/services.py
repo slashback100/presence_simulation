@@ -178,6 +178,7 @@ class PresenceSimulationServices:
 
         for entity_id in filtered_history:
             _LOGGER.debug("Entity %s", entity_id)
+            # Use create_task (thread-safe version) instead of async_create_task
             hass.create_task(
                 self._simulate_single_entity(
                     switch_id,

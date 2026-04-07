@@ -65,7 +65,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         else:
             self.data["entities"] = ",".join(self.data["entities"])
-            return self.async_create_entry(title="Simulation Presence", data=self.data, options=self.data)
+            return self.async_create_entry(title="Simulation Presence", data=self.data)
 
     @staticmethod
     def async_get_options_flow(entry):
@@ -100,11 +100,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         else:
             brightness = 0
 
+        switch_val = self.config_entry.options.get("switch", self.config_entry.data["switch"])
+        entities_val = self.config_entry.options.get("entities", self.config_entry.data["entities"])
+        labels_val = self.config_entry.options.get("labels", self.config_entry.data.get("labels", []))
+        delta_val = self.config_entry.options.get("delta", self.config_entry.data["delta"])
+
         data_schema = {
-            vol.Required("switch", default=self.config_entry.data["switch"]): str,
-            vol.Required("entities", default=self.config_entry.data["entities"].split(",")): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
-            vol.Required("labels", default=self.config_entry.data["labels"]): LabelSelector(LabelSelectorConfig(multiple=True)),
-            vol.Required("delta", default=self.config_entry.data["delta"]): int,
+            vol.Required("switch", default=switch_val): str,
+            vol.Required("entities", default=entities_val.split(",")): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
+            vol.Required("labels", default=labels_val): LabelSelector(LabelSelectorConfig(multiple=True)),
+            vol.Required("delta", default=delta_val): int,
             vol.Required("interval", default=interval): int,
             vol.Required("restore", default=restore): bool,
             vol.Required("random", default=random): int,

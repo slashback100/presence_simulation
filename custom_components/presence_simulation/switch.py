@@ -2,23 +2,15 @@
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from datetime import datetime, timezone, timedelta
-import math
 import re
 import logging
 import pytz
 from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
-        SWITCH,
-        UNIQUE_ID
 )
 SCAN_INTERVAL = timedelta(seconds=5)
 _LOGGER = logging.getLogger(__name__)
-
-async def async_setup_platform(hass, _, async_add_entities, discovery_info=None):
-    """Create presence simulation entity defined in YAML and add them to HA."""
-    _LOGGER.debug("async_setup_platform")
-    async_add_entities([PresenceSimulationSwitch(hass)], True)
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):

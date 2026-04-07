@@ -1,7 +1,6 @@
 """Component to integrate with presence_simulation."""
 
 import logging
-import pytz
 import re
 from datetime import datetime, timedelta, timezone
 from homeassistant.helpers.entity_registry import async_migrate_entries
@@ -115,6 +114,11 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry):
                 except Exception as e:
                     _LOGGER.warning("Failed to remove system user: %s", e)
 
+            hass.services.async_remove(DOMAIN, "start")
+            hass.services.async_remove(DOMAIN, "stop")
+            hass.services.async_remove(DOMAIN, "toggle")
+            _LOGGER.debug("Removed services")
+
             del hass.data[DOMAIN]
 
     except ValueError:
@@ -126,15 +130,13 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug("Updating listener entry id %s, %s, %s", entry.entry_id, entry.data, entry.options)
 
     if len(entry.options) > 0:
-        hass.config_entries.async_update_entry(entry, data=entry.options)
-        switch_id = SWITCH_PLATFORM + re.sub("[^0-9a-zA-Z]", "_", entry.data["switch"].lower())
+        switch_id = SWITCH_PLATFORM + "." + re.sub("[^0-9a-zA-Z]", "_", entry.data["switch"].lower())
         try:
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
         except Exception as e:
             _LOGGER.debug("Switch with id %s not known", switch_id)
             return
         entity.update_config(entry)
-        hass.config_entries.async_update_entry(entry, data=entry.options)
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
