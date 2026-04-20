@@ -115,6 +115,12 @@ class PresenceSimulationServices:
             return
 
         expanded_entities += expanded_labels
+        # Dedup while preserving order: an entity can be referenced multiple times
+        # (direct + via group + via label). Without dedup, _simulate_single_entity
+        # runs in parallel for the same entity_id and fires turn_on/off in a race,
+        # causing the flicker reported in #174, #193 and the stuck-on state in #179.
+        expanded_entities = list(dict.fromkeys(expanded_entities))
+        _LOGGER.debug("Deduplicated entities: %s", expanded_entities)
 
         if len(expanded_entities) == 0:
             _LOGGER.error("Error during identifying entities, no valid entities has been found")
