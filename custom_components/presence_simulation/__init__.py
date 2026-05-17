@@ -52,11 +52,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_register(DOMAIN, "start", services.handle_service_start)
         hass.services.async_register(DOMAIN, "stop", services.handle_service_stop)
         hass.services.async_register(DOMAIN, "toggle", services.handle_service_toggle)
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _launch_simulation_after_restart)
 
+        async def _on_ha_started(event: Any) -> None:
+            await _launch_simulation_after_restart(hass)
+
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_ha_started)
     entry.add_update_listener(update_listener)
 
-    hass.async_create_task(hass.config_entries.async_forward_entry_setups(entry, [SWITCH_PLATFORM]))
+    await hass.config_entries.async_forward_entry_setups(entry, [SWITCH_PLATFORM])
 
     return True
 
@@ -86,9 +89,10 @@ def is_running(hass: HomeAssistant, switch_id: str) -> bool:
     return entity.is_on
 
 
-async def _launch_simulation_after_restart(event: Any) -> None:
+async def _launch_simulation_after_restart(hass: HomeAssistant) -> None:
     """Launch simulation after HA restart if it was running."""
-    hass = event.hass
+    if SWITCH_PLATFORM not in hass.data.get(DOMAIN, {}):
+        return
     for switch_id in hass.data[DOMAIN][SWITCH_PLATFORM]:
         _LOGGER.debug("Launch simulation after restart : switch is %s", switch_id)
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
