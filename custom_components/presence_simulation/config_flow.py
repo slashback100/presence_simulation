@@ -41,9 +41,9 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("delta", default=DEFAULT_DELTA): DELTA_VALIDATOR,
             vol.Required("interval", default=DEFAULT_INTERVAL): INTERVAL_VALIDATOR,
             vol.Required("restore", default=False): bool,
-            vol.Required("random", default=0): RANDOM_validator,
+            vol.Required("random", default=0): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=False): bool,
-            vol.Required("brightness", default=0): BRIGHTNESS_validator,
+            vol.Required("brightness", default=0): BRIGHTNESS_VALIDATOR,
         }
         if not info:
             return self.async_show_form(
