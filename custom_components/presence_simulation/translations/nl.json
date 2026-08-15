@@ -15,7 +15,8 @@
                     "restore": "Herstel toestand na simulatie",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
                     "unavailable_as_off": "Consider Unavailable status as Off",
-                    "history_end": "Einde bronhistorie"
+                    "history_end_date": "Einddatum bronhistorie",
+                    "history_end_time": "Eindtijd bronhistorie"
                 }
             }
         }
@@ -35,7 +36,8 @@
                     "restore": "Herstel toestand na simulatie",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
                     "unavailable_as_off": "Consider Unavailable status as Off",
-                    "history_end": "Einde bronhistorie"
+                    "history_end_date": "Einddatum bronhistorie",
+                    "history_end_time": "Eindtijd bronhistorie"
                 }
             }
         }
