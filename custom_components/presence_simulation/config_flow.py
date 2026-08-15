@@ -46,7 +46,9 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("random", default=0): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=False): bool,
             vol.Required("brightness", default=0): BRIGHTNESS_VALIDATOR,
-            vol.Optional("history_end", default=None): DateTimeSelector(DateTimeSelectorConfig()),
+            vol.Optional("history_end", default=None): DateTimeSelector(
+                DateTimeSelectorConfig(include_date=True, include_time=True)
+            ),
         }
         if not info:
             return self.async_show_form(
@@ -125,7 +127,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("random", default=random): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=unavailable_as_off): bool,
             vol.Required("brightness", default=brightness): BRIGHTNESS_VALIDATOR,
-            vol.Optional("history_end", default=history_end_val or None): DateTimeSelector(DateTimeSelectorConfig()),
+            vol.Optional("history_end", default=history_end_val or None): DateTimeSelector(
+                DateTimeSelectorConfig(include_date=True, include_time=True)
+            ),
         }
         _LOGGER.debug("switch %s", self.config_entry.data["switch"])
         _LOGGER.debug("config_entry data %s", self.config_entry.data)
