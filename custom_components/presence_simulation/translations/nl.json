@@ -14,7 +14,8 @@
                     "interval": "Verversingsinterval (in seconden)",
                     "restore": "Herstel toestand na simulatie",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
-                    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off",
+                    "history_end": "Einde bronhistorie (ISO 8601; leeg laten gebruikt nu)"
                 }
             }
         }
@@ -33,7 +34,8 @@
                     "interval": "Verversingsinterval (in seconden)",
                     "restore": "Herstel toestand na simulatie",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
-                    "unavailable_as_off": "Consider Unavailable status as Off"
+                    "unavailable_as_off": "Consider Unavailable status as Off",
+                    "history_end": "Einde bronhistorie (ISO 8601; leeg laten gebruikt nu)"
                 }
             }
         }

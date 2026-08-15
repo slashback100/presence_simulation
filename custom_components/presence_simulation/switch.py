@@ -62,6 +62,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._restore = conf["restore"]
         self._unavailable_as_off = conf.get("unavailable_as_off", False)
         self._brightness = conf.get("brightness", 0)
+        self._history_end = conf.get("history_end", "")
         self.reset_default_values()
         _LOGGER.debug("entities %s", conf["entities"])
 
@@ -145,6 +146,9 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
     @property
     def interval(self):
         return self._interval
+    @property
+    def history_end(self):
+        return self._history_end_overriden
 
     async def reset_default_values_async(self):
         self._entities_overriden = self._entities
@@ -154,6 +158,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._delta_overriden = self._delta
         self._unavailable_as_off_overriden = self._unavailable_as_off
         self._brightness_overriden = self._brightness
+        self._history_end_overriden = self._history_end
 
     def reset_default_values(self):
         self._entities_overriden = self._entities
@@ -163,6 +168,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._delta_overriden = self._delta
         self._unavailable_as_off_overriden = self._unavailable_as_off
         self._brightness_overriden = self._brightness
+        self._history_end_overriden = self._history_end
 
 
     #def device_state_attributes(self):
@@ -200,6 +206,8 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
                     self._unavailable_as_off_overriden = state.attributes["unavailable_as_off"]
                 if "brightness" in state.attributes:
                     self._brightness_overriden = state.attributes["brightness"]
+                if "history_end" in state.attributes:
+                    self._history_end_overriden = state.attributes["history_end"]
                 #just set internally to on, the simulation service will be called later once the HA Start event is fired
                 self.internal_turn_on()
             else:
@@ -252,6 +260,10 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self.attr["brightness"] = brightness
         self._brightness_overriden = brightness
 
+    async def set_history_end(self, history_end):
+        self.attr["history_end"] = history_end
+        self._history_end_overriden = history_end
+
     async def set_interval(self, interval):
         self._interval = interval
 
@@ -287,3 +299,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
     async def reset_brightness(self):
         if "brightness" in self.attr:
             del self.attr["brightness"]
+
+    async def reset_history_end(self):
+        if "history_end" in self.attr:
+            del self.attr["history_end"]

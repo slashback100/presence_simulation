@@ -44,6 +44,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("random", default=0): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=False): bool,
             vol.Required("brightness", default=0): BRIGHTNESS_VALIDATOR,
+            vol.Optional("history_end", default=""): str,
         }
         if not info:
             return self.async_show_form(
@@ -110,6 +111,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         entities_val = self.config_entry.options.get("entities", self.config_entry.data["entities"])
         labels_val = self.config_entry.options.get("labels", self.config_entry.data.get("labels", []))
         delta_val = self.config_entry.options.get("delta", self.config_entry.data["delta"])
+        history_end_val = self.config_entry.options.get("history_end", self.config_entry.data.get("history_end", ""))
 
         data_schema = {
             vol.Required("switch", default=switch_val): str,
@@ -121,6 +123,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("random", default=random): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=unavailable_as_off): bool,
             vol.Required("brightness", default=brightness): BRIGHTNESS_VALIDATOR,
+            vol.Optional("history_end", default=history_end_val): str,
         }
         _LOGGER.debug("switch %s", self.config_entry.data["switch"])
         _LOGGER.debug("config_entry data %s", self.config_entry.data)
