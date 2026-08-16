@@ -126,6 +126,8 @@ class PresenceSimulationServices:
             _LOGGER.error("Error during identifying entities, no valid entities has been found")
             return
 
+        await entity.set_simulated_entities(expanded_entities)
+        await entity.set_history_window(minus_delta, current_date)
         entity.internal_turn_on()
         _LOGGER.debug("Presence simulation started")
 
@@ -261,7 +263,7 @@ class PresenceSimulationServices:
             if not is_running(switch_id):
                 return
 
-            await self._entity_controller.update_entity(
+            event_data = await self._entity_controller.update_entity(
                 entity_id,
                 state,
                 entity.unavailable_as_off,
@@ -270,6 +272,8 @@ class PresenceSimulationServices:
                 event_fire,
                 MY_EVENT,
             )
+            if event_data:
+                await entity.set_last_event(event_data)
             await entity.async_remove_event(entity_id)
 
     async def stop_simulation(

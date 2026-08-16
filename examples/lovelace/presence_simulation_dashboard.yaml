@@ -1,0 +1,50 @@
+type: vertical-stack
+cards:
+  - type: tile
+    entity: switch.presence_simulation
+    name: Presence simulation
+    icon: mdi:home-clock-outline
+    features:
+      - type: toggle
+
+  - type: markdown
+    title: Overzicht
+    content: >-
+      {% set sim = states.switch.presence_simulation %}
+      {% if is_state(sim.entity_id, 'on') %}
+        🟢 **Simulatie actief** · {{ state_attr(sim.entity_id, 'active_entity_count') | default(0, true) }} entiteit(en) actief
+      {% else %}
+        ⚪ **Simulatie uitgeschakeld**
+      {% endif %}
+
+      {% set next = state_attr(sim.entity_id, 'next_events') | default([], true) %}
+      {% if next %}
+        **Volgende actie**  
+        `{{ next[0].datetime | as_timestamp | timestamp_custom('%a %d %b · %H:%M', true) }}` · **{{ state_attr(next[0].entity_id, 'friendly_name') or next[0].entity_id }}** → `{{ next[0].state }}`
+      {% else %}
+        _Er is nog geen volgende actie ingepland._
+      {% endif %}
+
+  - type: markdown
+    title: Actief op dit moment
+    content: >-
+      {% set active = state_attr('switch.presence_simulation', 'active_entities') | default([], true) %}
+      {% if active %}
+        {% for item in active %}
+        - 💡 **{{ state_attr(item.entity_id, 'friendly_name') or item.entity_id }}** · `{{ item.state }}`
+        {% endfor %}
+      {% else %}
+        _Geen gevolgde entiteiten zijn nu actief._
+      {% endif %}
+
+  - type: markdown
+    title: Komende planning
+    content: >-
+      {% set events = state_attr('switch.presence_simulation', 'next_events') | default([], true) %}
+      {% if events %}
+        {% for event in events %}
+        - `{{ event.datetime | as_timestamp | timestamp_custom('%a %d %b · %H:%M', true) }}` · **{{ state_attr(event.entity_id, 'friendly_name') or event.entity_id }}** → `{{ event.state }}`
+        {% endfor %}
+      {% else %}
+        _Geen acties ingepland._
+      {% endif %}
