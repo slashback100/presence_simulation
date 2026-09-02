@@ -140,5 +140,4 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             )
 
         info["entities"] = ",".join(info["entities"])
-        self.hass.config_entries.async_update_entry(self.config_entry, options=info)
-        return self.async_abort(reason="")
+        return self.async_create_entry(title="", data=info)
