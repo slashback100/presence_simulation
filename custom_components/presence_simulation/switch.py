@@ -11,6 +11,8 @@ from .const import (
 )
 SCAN_INTERVAL = timedelta(seconds=5)
 _LOGGER = logging.getLogger(__name__)
+_MAX_VISIBLE_NEXT_EVENTS = 10
+_ACTIVE_STATES = {"on", "open", "opening", "playing"}
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
@@ -36,6 +38,7 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         # to None by homeassistant/helpers/entity.py:ToggleEntity.
         # State will be initialized when restore_state() runs.
         self._next_events = []
+        self._simulated_entities = []
         self.id = SWITCH_PLATFORM+"."+re.sub("[^0-9a-zA-Z]", "_", config.data["switch"].lower())
         _LOGGER.debug("In init of switch - end")
 
@@ -120,6 +123,38 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
                 if prop in self.attr:
                     del self.attr[prop]
+
+        self.attr["scheduled_event_count"] = len(self._next_events)
+        self.attr["next_events"] = [
+            {
+                "datetime": self._format_datetime(next_datetime),
+                "entity_id": entity_id,
+                "state": state,
+            }
+            for next_datetime, entity_id, state in self._next_events[
+                :_MAX_VISIBLE_NEXT_EVENTS
+            ]
+        ]
+        current_entities = []
+        active_entities = []
+        for entity_id in self._simulated_entities:
+            current_state = self.hass.states.get(entity_id)
+            if current_state is None:
+                continue
+            current = {"entity_id": entity_id, "state": current_state.state}
+            current_entities.append(current)
+            if current_state.state in _ACTIVE_STATES:
+                active_entities.append(current)
+        self.attr["current_entities"] = current_entities
+        self.attr["active_entities"] = active_entities
+        self.attr["active_entity_count"] = len(active_entities)
+
+    def _format_datetime(self, value):
+        """Format a scheduled datetime in the configured Home Assistant zone."""
+        try:
+            return value.astimezone(pytz.timezone(self.hass.config.time_zone)).isoformat()
+        except (AttributeError, TypeError, pytz.UnknownTimeZoneError):
+            return str(value)
 
     @property
     def labels(self):
@@ -214,10 +249,35 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         self._next_events.append((next_datetime, entity_id, state))
         #sort so that the firt element is the next one
         self._next_events = sorted(self._next_events)
+        self._update_attributes()
+        self.async_write_ha_state()
 
     async def async_remove_event(self, entity_id):
         """Remove the next event of an entity"""
         self._next_events = [e for e in self._next_events if e[1] != entity_id]
+        self._update_attributes()
+        self.async_write_ha_state()
+
+    async def set_simulated_entities(self, entities):
+        """Store the resolved entities so their current state is visible."""
+        self._simulated_entities = list(entities)
+        self._update_attributes()
+        self.async_write_ha_state()
+
+    async def set_history_window(self, history_start, history_end):
+        """Expose the exact source history window used for this run."""
+        self.attr["history_start"] = self._format_datetime(history_start)
+        self.attr["source_history_end"] = self._format_datetime(history_end)
+
+    async def set_last_event(self, event_data):
+        """Expose the latest action actually sent by the simulator."""
+        self.attr["last_event"] = {
+            "datetime": self._format_datetime(datetime.now(timezone.utc)),
+            "entity_id": event_data["entity_id"],
+            "service": event_data["service"],
+        }
+        self._update_attributes()
+        self.async_write_ha_state()
 
     async def set_start_datetime(self, start_datetime):
         self.attr["simulation_start"] = start_datetime
