@@ -27,6 +27,10 @@ start:
       name: Set light brightness
       description: Set a specific brightness fot lights that allows it
       example: 75
+    history_end:
+      name: End of source history
+      description: ISO 8601 date and time at which source history ends. The selected history is replayed cyclically from that moment.
+      example: "2026-08-09T00:00:00+02:00"
 stop:
   description: Stop the presence simulation
   name: Presence simulation stop

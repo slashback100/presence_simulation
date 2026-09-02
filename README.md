@@ -114,6 +114,13 @@ The service `presence_simulation.toggle` will start or stop the simulation, depe
 
 Each time the simulation calls a service (turn on a light, open a cover, ...), an event `presence_simulation_change` is fired. You can catch this event in an automation, to notify you for instance.
 
+# Dashboard example
+
+`examples/lovelace/presence_simulation_dashboard.yaml` is a native Lovelace card
+that shows the next actions, the currently active simulated entities, and the
+most recent simulation action. Replace `switch.presence_simulation` with the
+name of your own Presence Simulation switch before adding the card to a dashboard.
+
 # Buy me a coffee
 Liked some of my work? Buy me a coffee (or more likely a beer)
 
