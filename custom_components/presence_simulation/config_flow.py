@@ -92,7 +92,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if "restore" in self.config_entry.options:
             restore = self.config_entry.options["restore"]
         else:
-            restore = 0
+            restore = False
         if "random" in self.config_entry.options:
             random = self.config_entry.options["random"]
         else:
