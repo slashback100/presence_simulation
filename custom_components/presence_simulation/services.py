@@ -151,7 +151,7 @@ class PresenceSimulationServices:
             return
 
         await entity.set_simulated_entities(expanded_entities)
-        await entity.set_history_window(history_start, history_end)
+        await entity.set_history_window(history_start, history_end or current_date)
         entity.internal_turn_on()
         _LOGGER.debug("Presence simulation started")
 
