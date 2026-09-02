@@ -17,6 +17,16 @@ from .entity_controller import EntityController
 _LOGGER = logging.getLogger(__name__)
 
 
+def _parse_history_end(value: Any, hass: HomeAssistant) -> Optional[datetime]:
+    """Parse a configured history cutoff as an aware UTC datetime."""
+    if not value:
+        return None
+    history_end = value if isinstance(value, datetime) else datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if history_end.tzinfo is None:
+        history_end = pytz.timezone(hass.config.time_zone).localize(history_end)
+    return history_end.astimezone(timezone.utc)
+
+
 class PresenceSimulationServices:
     """Service handlers for presence simulation."""
 
@@ -87,6 +97,8 @@ class PresenceSimulationServices:
                     await entity.set_unavailable_as_off(call.data.get("unavailable_as_off", 0))
                 if "brightness" in call.data:
                     await entity.set_brightness(call.data.get("brightness", 0))
+                if "history_end" in call.data:
+                    await entity.set_history_end(call.data.get("history_end"))
                 if "after_ha_restart" in call.data:
                     after_ha_restart = call.data.get("after_ha_restart", False)
         else:
@@ -100,7 +112,19 @@ class PresenceSimulationServices:
             return
 
         current_date = datetime.now(timezone.utc)
-        minus_delta = current_date + timedelta(-entity.delta)
+        try:
+            history_end = _parse_history_end(entity.history_end, self._hass)
+        except (TypeError, ValueError) as err:
+            _LOGGER.error("Invalid history_end value %r: %s", entity.history_end, err)
+            return
+        if history_end is None:
+            history_start = current_date - timedelta(days=entity.delta)
+            replay_offset = timedelta(days=entity.delta)
+        else:
+            history_start = history_end - timedelta(days=entity.delta)
+            cycle_seconds = timedelta(days=entity.delta).total_seconds()
+            cycle = max(0, int((current_date - history_end).total_seconds() // cycle_seconds))
+            replay_offset = timedelta(days=entity.delta * (cycle + 1))
 
         try:
             expanded_entities = await self._expand_entities(entity.entities)
@@ -162,29 +186,33 @@ class PresenceSimulationServices:
                         e,
                     )
 
-        _LOGGER.debug("Getting the historic from %s for %s", minus_delta, expanded_entities)
+        _LOGGER.debug("Getting the historic from %s to %s for %s", history_start, history_end, expanded_entities)
 
         from homeassistant.components.recorder import get_instance
 
         get_instance(self._hass).async_add_executor_job(
             self._fetch_and_handle_history,
             self._hass,
-            minus_delta,
+            history_start,
+            history_end,
             expanded_entities,
             switch_id,
             call,
+            replay_offset,
         )
 
     def _fetch_and_handle_history(
         self,
         hass: HomeAssistant,
-        minus_delta: datetime,
+        history_start: datetime,
+        history_end: Optional[datetime],
         expanded_entities: List[str],
         switch_id: str,
         call: Optional[Any],
+        replay_offset: timedelta,
     ) -> None:
         """Fetch history and dispatch to entity simulators."""
-        history = HistoryManager.get_history(hass, minus_delta, expanded_entities)
+        history = HistoryManager.get_history(hass, history_start, expanded_entities, history_end)
         entity = self._get_switch_entity()[switch_id]
         filtered_history = HistoryManager.filter_out_undefined(
             history, not entity.unavailable_as_off
@@ -199,12 +227,12 @@ class PresenceSimulationServices:
                     switch_id,
                     entity_id,
                     filtered_history[entity_id],
-                    entity.delta,
+                    replay_offset,
                     entity.random,
                 )
             )
 
-        hass.create_task(self._schedule_restart(call, switch_id=switch_id))
+        hass.create_task(self._schedule_restart(call, switch_id=switch_id, history_end=history_end))
         _LOGGER.debug("All async tasks launched")
 
     async def _simulate_single_entity(
@@ -212,7 +240,7 @@ class PresenceSimulationServices:
         switch_id: str,
         entity_id: str,
         hist: List[Any],
-        delta: int,
+        replay_offset: timedelta,
         random_val: int,
     ) -> None:
         """Replay the historic of one entity."""
@@ -222,6 +250,7 @@ class PresenceSimulationServices:
         is_running = self._is_running
         event_fire = self._hass.bus.fire
 
+        last_past_state = None
         for idx, state in enumerate(hist):
             _LOGGER.debug("State %s", state.as_dict())
             try:
@@ -229,8 +258,8 @@ class PresenceSimulationServices:
             except AttributeError:
                 last_updated = state.last_updated
 
-            target_time = last_updated + timedelta(delta)
-            _LOGGER.debug("Switch of %s foreseen at %s", entity_id, target_time + timedelta(delta))
+            target_time = last_updated + replay_offset
+            _LOGGER.debug("Switch of %s foreseen at %s", entity_id, target_time)
 
             if idx > 0:
                 _LOGGER.debug("Randomize the event within a range of +/- %s sec", random_val)
@@ -252,6 +281,12 @@ class PresenceSimulationServices:
                         "initial_secs_left %s, target_time %s", initial_secs_left, target_time
                     )
 
+            if target_time <= datetime.now(timezone.utc):
+                last_past_state = state
+                continue
+            if last_past_state is not None:
+                await self._entity_controller.update_entity(entity_id, last_past_state, entity.unavailable_as_off, entity.brightness, False, event_fire, MY_EVENT)
+                last_past_state = None
             await entity.async_add_next_event(target_time, entity_id, state.state)
 
             while is_running(switch_id):
@@ -275,6 +310,9 @@ class PresenceSimulationServices:
             if event_data:
                 await entity.set_last_event(event_data)
             await entity.async_remove_event(entity_id)
+
+        if last_past_state is not None and is_running(switch_id):
+            await self._entity_controller.update_entity(entity_id, last_past_state, entity.unavailable_as_off, entity.brightness, False, event_fire, MY_EVENT)
 
     async def stop_simulation(
         self,
@@ -313,6 +351,7 @@ class PresenceSimulationServices:
             await entity.reset_labels()
             await entity.reset_delta()
             await entity.reset_random()
+            await entity.reset_history_end()
 
             scene = self._hass.states.get(
                 SCENE_PLATFORM + "." + self._get_scene_name(switch_id)
@@ -354,13 +393,18 @@ class PresenceSimulationServices:
         else:
             await self.start_simulation(call, restart=False)
 
-    async def _schedule_restart(self, call: Any, switch_id: str) -> None:
+    async def _schedule_restart(self, call: Any, switch_id: str, history_end: Optional[datetime] = None) -> None:
         """Make sure that once delta days is passed, relaunch the simulation."""
         entity = self._get_switch_entity()[switch_id]
         await entity.reset_default_values_async()
         _LOGGER.debug("Presence simulation will be relaunched in %i days", entity.delta)
 
-        start_plus_delta = datetime.now(timezone.utc) + timedelta(entity.delta)
+        if history_end is None:
+            start_plus_delta = datetime.now(timezone.utc) + timedelta(days=entity.delta)
+        else:
+            cycle_seconds = timedelta(days=entity.delta).total_seconds()
+            cycle = max(0, int((datetime.now(timezone.utc) - history_end).total_seconds() // cycle_seconds))
+            start_plus_delta = history_end + timedelta(days=entity.delta * (cycle + 1))
 
         while self._is_running(switch_id):
             secs_left = (start_plus_delta - datetime.now(timezone.utc)).total_seconds()

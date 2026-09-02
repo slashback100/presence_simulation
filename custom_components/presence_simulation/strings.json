@@ -14,7 +14,9 @@
                     "restore": "Restore state after simulation",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
                     "unavailable_as_off": "Consider Unavailable status as Off",
-					"brightness": "Brightness to be used if light allows the feature"
+					"brightness": "Brightness to be used if light allows the feature",
+                    "history_end_date": "End date of source history",
+                    "history_end_time": "End time of source history"
                 }
             }
         }
@@ -34,7 +36,9 @@
                     "restore": "Restore state after simulation",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
                     "unavailable_as_off": "Consider Unavailable status as Off",
-					"brightness": "Brightness to be used if light allows the feature"
+					"brightness": "Brightness to be used if light allows the feature",
+                    "history_end_date": "End date of source history",
+                    "history_end_time": "End time of source history"
                 }
             }
         }
