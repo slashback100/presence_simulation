@@ -31,6 +31,30 @@ start:
       name: End of source history
       description: ISO 8601 date and time at which source history ends. The selected history is replayed cyclically from that moment.
       example: "2026-08-09T00:00:00+02:00"
+    use_snapshot:
+      name: Use saved snapshot
+      description: Replay the locally saved history snapshot instead of Recorder history.
+      example: true
+capture_snapshot:
+  name: Capture history snapshot
+  description: Save the selected history window locally for later replay without Recorder history.
+  fields:
+    switch_id:
+      name: The id of the presence simulation switch
+      example: switch.presence_simulation
+    delta:
+      name: Number of source history days
+      example: 7
+    history_end:
+      name: End of source history
+      example: "2026-08-09T00:00:00+02:00"
+create_demo_snapshot:
+  name: Create temporary demo snapshot
+  description: Creates a seven-day synthetic lighting routine for testing.
+  fields:
+    switch_id:
+      name: The id of the presence simulation switch
+      example: switch.presence_simulation
 stop:
   description: Stop the presence simulation
   name: Presence simulation stop
