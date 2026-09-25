@@ -73,8 +73,8 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("random", default=0): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=False): bool,
             vol.Required("brightness", default=0): BRIGHTNESS_VALIDATOR,
-            vol.Optional("history_end_date", default=None): DateSelector(DateSelectorConfig()),
-            vol.Optional("history_end_time", default=None): TimeSelector(TimeSelectorConfig()),
+            vol.Optional("history_end_date"): DateSelector(DateSelectorConfig()),
+            vol.Optional("history_end_time"): TimeSelector(TimeSelectorConfig()),
         }
         if not info:
             return self.async_show_form(
@@ -159,8 +159,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("random", default=random): RANDOM_VALIDATOR,
             vol.Required("unavailable_as_off", default=unavailable_as_off): bool,
             vol.Required("brightness", default=brightness): BRIGHTNESS_VALIDATOR,
-            vol.Optional("history_end_date", default=history_end_date): DateSelector(DateSelectorConfig()),
-            vol.Optional("history_end_time", default=history_end_time): TimeSelector(TimeSelectorConfig()),
+            vol.Optional("history_end_date", default=history_end_date)
+                if history_end_date is not None else vol.Optional("history_end_date"): DateSelector(DateSelectorConfig()),
+            vol.Optional("history_end_time", default=history_end_time)
+                if history_end_time is not None else vol.Optional("history_end_time"): TimeSelector(TimeSelectorConfig()),
         }
         _LOGGER.debug("switch %s", self.config_entry.data["switch"])
         _LOGGER.debug("config_entry data %s", self.config_entry.data)
