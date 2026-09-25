@@ -52,11 +52,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_register(DOMAIN, "start", services.handle_service_start)
         hass.services.async_register(DOMAIN, "stop", services.handle_service_stop)
         hass.services.async_register(DOMAIN, "toggle", services.handle_service_toggle)
+        hass.services.async_register(DOMAIN, "capture_snapshot", services.handle_service_snapshot)
+        hass.services.async_register(DOMAIN, "create_demo_snapshot", services.handle_service_demo_snapshot)
 
         async def _on_ha_started(event: Any) -> None:
             await _launch_simulation_after_restart(hass)
 
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_ha_started)
+
     entry.add_update_listener(update_listener)
 
     await hass.config_entries.async_forward_entry_setups(entry, [SWITCH_PLATFORM])
@@ -125,6 +128,8 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
             hass.services.async_remove(DOMAIN, "start")
             hass.services.async_remove(DOMAIN, "stop")
             hass.services.async_remove(DOMAIN, "toggle")
+            hass.services.async_remove(DOMAIN, "capture_snapshot")
+            hass.services.async_remove(DOMAIN, "create_demo_snapshot")
             _LOGGER.debug("Removed services")
 
             del hass.data[DOMAIN]
