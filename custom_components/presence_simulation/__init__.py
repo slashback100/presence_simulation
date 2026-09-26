@@ -73,7 +73,8 @@ async def _get_or_create_system_user(hass: HomeAssistant) -> Any:
 
     system_user = await hass.auth.async_create_system_user(
         _INTEGRATION_NAME,
-        group_ids=["system-admin"]
+        group_ids=["system-admin"],
+        local_only=True
     )
     _LOGGER.debug("Created system user for presence simulation: %s", system_user.id)
     return system_user
