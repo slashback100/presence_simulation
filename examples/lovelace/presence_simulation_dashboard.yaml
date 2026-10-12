@@ -27,24 +27,24 @@ cards:
 
   - type: markdown
     title: Actief op dit moment
-    content: >-
-      {% set active = state_attr('switch.presence_simulation', 'active_entities') | default([], true) %}
-      {% if active %}
-        {% for item in active %}
-        - 💡 **{{ state_attr(item.entity_id, 'friendly_name') or item.entity_id }}** · `{{ item.state }}`
-        {% endfor %}
-      {% else %}
-        _Geen gevolgde entiteiten zijn nu actief._
+    content: |-
+      {% set active = state_attr('switch.presence_simulation', 'active_entities') | default([], true) -%}
+      {% if active -%}
+      {% for item in active -%}
+      - 💡 **{{ state_attr(item.entity_id, 'friendly_name') or item.entity_id }}** · `{{ item.state }}`
+      {% endfor -%}
+      {% else -%}
+      _Geen gevolgde entiteiten zijn nu actief._
       {% endif %}
 
   - type: markdown
     title: Komende planning
-    content: >-
-      {% set events = state_attr('switch.presence_simulation', 'next_events') | default([], true) %}
-      {% if events %}
-        {% for event in events %}
-        - `{{ event.datetime | as_timestamp | timestamp_custom('%a %d %b · %H:%M', true) }}` · **{{ state_attr(event.entity_id, 'friendly_name') or event.entity_id }}** → `{{ event.state }}`
-        {% endfor %}
-      {% else %}
-        _Geen acties ingepland._
+    content: |-
+      {% set events = state_attr('switch.presence_simulation', 'next_events') | default([], true) -%}
+      {% if events -%}
+      {% for event in events -%}
+      - `{{ event.datetime | as_timestamp | timestamp_custom('%a %d %b · %H:%M', true) }}` · **{{ state_attr(event.entity_id, 'friendly_name') or event.entity_id }}** → `{{ event.state }}`
+      {% endfor -%}
+      {% else -%}
+      _Geen acties ingepland._
       {% endif %}
