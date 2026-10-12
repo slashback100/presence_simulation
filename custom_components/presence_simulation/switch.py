@@ -4,7 +4,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from datetime import datetime, timezone, timedelta
 import re
 import logging
-import pytz
+from homeassistant.util import dt as dt_util
 from .const import (
         DOMAIN,
         SWITCH_PLATFORM,
@@ -137,12 +137,9 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         if len(self._next_events) > 0:
             self.attr["next_event_datetime"], self.attr["next_entity_id"], self.attr["next_entity_state"] = self._next_events[0]
             try:
-                self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(self.hass.config.time_zone).strftime("%d/%m/%Y %H:%M:%S")
+                self.attr["next_event_datetime"] = dt_util.as_local(self.attr["next_event_datetime"]).strftime("%d/%m/%Y %H:%M:%S")
             except Exception as e:
-                try:
-                    self.attr["next_event_datetime"] = self.attr["next_event_datetime"].astimezone(pytz.timezone(self.hass.config.time_zone)).strftime("%d/%m/%Y %H:%M:%S")
-                except Exception as e:
-                    _LOGGER.warning("Exception while trying to convert utc to local time: %s",e)
+                _LOGGER.warning("Exception while trying to convert utc to local time: %s",e)
         else:
             for prop in ("next_event_datetime", "next_entity_id", "next_entity_state"):
                 if prop in self.attr:
@@ -176,8 +173,8 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
     def _format_datetime(self, value):
         """Format a scheduled datetime in the configured Home Assistant zone."""
         try:
-            return value.astimezone(pytz.timezone(self.hass.config.time_zone)).isoformat()
-        except (AttributeError, TypeError, pytz.UnknownTimeZoneError):
+            return dt_util.as_local(value).isoformat()
+        except (AttributeError, TypeError, ValueError):
             return str(value)
 
     @property

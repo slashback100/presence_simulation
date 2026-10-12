@@ -2,13 +2,13 @@
 
 import logging
 import asyncio
-import pytz
 import random
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from homeassistant.core import HomeAssistant, Context
 from homeassistant.helpers import label_registry as lr, entity_registry as er
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, SWITCH_PLATFORM, RESTORE_SCENE, SCENE_PLATFORM, MY_EVENT, MIN_DELAY
 from .history import HistoryManager
@@ -24,7 +24,7 @@ def _parse_history_end(value: Any, hass: HomeAssistant) -> Optional[datetime]:
         return None
     history_end = value if isinstance(value, datetime) else datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     if history_end.tzinfo is None:
-        history_end = pytz.timezone(hass.config.time_zone).localize(history_end)
+        history_end = history_end.replace(tzinfo=dt_util.get_default_time_zone())
     return history_end.astimezone(timezone.utc)
 
 
@@ -267,17 +267,7 @@ class PresenceSimulationServices:
         _LOGGER.debug("Presence simulation started")
 
         if not restart:
-            try:
-                await entity.set_start_datetime(datetime.now(self._hass.config.time_zone))
-            except Exception as e:
-                try:
-                    presence_timezone = await asyncio.get_event_loop().run_in_executor(
-                        None, pytz.timezone, self._hass.config.time_zone
-                    )
-                    await entity.set_start_datetime(datetime.now(presence_timezone))
-                except Exception as e:
-                    _LOGGER.warning("Start datetime could not be set to HA timezone: %s", e)
-                    await entity.set_start_datetime(datetime.now())
+            await entity.set_start_datetime(dt_util.now())
 
             if entity.restore and not after_ha_restart:
                 service_data: Dict[str, Any] = {}
