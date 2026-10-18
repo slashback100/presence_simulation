@@ -193,4 +193,14 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new_data["labels"] = []
         hass.config_entries.async_update_entry(config_entry, data=new_data, version=5)
 
+    if config_entry.version == 5:
+        _LOGGER.debug("Will migrate to version 6")
+        # The historic end date is no longer part of the configuration:
+        # it can only be provided when calling the start service.
+        new_data = {k: v for k, v in config_entry.data.items() if k != "history_end"}
+        new_options = {k: v for k, v in config_entry.options.items() if k != "history_end"}
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options, version=6
+        )
+
     return True

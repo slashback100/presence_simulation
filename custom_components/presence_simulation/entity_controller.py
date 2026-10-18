@@ -1,8 +1,13 @@
+import asyncio
 import logging
 from homeassistant.core import HomeAssistant, Context
 from typing import Any, Optional
 
 _LOGGER = logging.getLogger(__name__)
+
+# Max time to wait for a cover to finish moving before sending the tilt command
+COVER_MOVE_TIMEOUT = 180
+COVER_POLL_INTERVAL = 1
 
 
 class EntityController:
@@ -106,6 +111,28 @@ class EntityController:
         _LOGGER.debug("State in neither on nor off (is %s), do nothing", state.state)
         return None
 
+    async def _wait_for_cover_stop(self, entity_id: str) -> None:
+        """Wait until the cover is no longer opening/closing (or timeout).
+
+        Sending set_cover_tilt_position while the cover is still travelling
+        stops the travel on many integrations (e.g. Shelly), so the tilt must
+        only be applied once the requested position has been reached.
+        """
+        # Give the integration a moment to report the movement start
+        await asyncio.sleep(2)
+        waited = 2
+        while waited < COVER_MOVE_TIMEOUT:
+            current = self._hass.states.get(entity_id)
+            if current is None or current.state not in ("opening", "closing"):
+                return
+            await asyncio.sleep(COVER_POLL_INTERVAL)
+            waited += COVER_POLL_INTERVAL
+        _LOGGER.warning(
+            "Cover %s still moving after %s s, applying tilt anyway",
+            entity_id,
+            COVER_MOVE_TIMEOUT,
+        )
+
     async def _handle_cover(
         self,
         entity_id: str,
@@ -153,7 +180,12 @@ class EntityController:
                     "service_data": service_data.copy(),
                 }
                 del service_data["position"]
-                if "current_tilt_position" in state.attributes:
+                if (
+                    "current_tilt_position" in state.attributes
+                    and state.attributes["current_position"] < 100
+                ):
+                    # Do not interrupt the travel: wait until the cover has stopped
+                    await self._wait_for_cover_stop(entity_id)
                     service_data["tilt_position"] = state.attributes["current_tilt_position"]
                     await self._hass.services.async_call(
                         "cover",
@@ -176,6 +208,8 @@ class EntityController:
                 )
                 event_data = {"entity_id": entity_id, "service": "cover.open_cover", "service_data": service_data}
                 if "current_tilt_position" in state.attributes:
+                    # Do not interrupt the travel: wait until the cover has stopped
+                    await self._wait_for_cover_stop(entity_id)
                     service_data["tilt_position"] = state.attributes["current_tilt_position"]
                     await self._hass.services.async_call(
                         "cover",
