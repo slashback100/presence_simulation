@@ -1,0 +1,66 @@
+blueprint:
+  name: Presence Simulation - extended absence
+  description: >-
+    Starts Presence Simulation after an entity has been on for the configured
+    time. The source history ends at the moment the absence began, so activity
+    recorded while the house is empty is never replayed. Stops on return.
+  domain: automation
+  input:
+    away_entity:
+      name: Afwezigheidsentiteit
+      description: An input_boolean or binary_sensor that is on while everyone is away.
+      selector:
+        entity:
+          filter:
+            - domain:
+                - binary_sensor
+                - input_boolean
+    absence_delay:
+      name: Startvertraging
+      description: Start the simulation only after this many hours of absence.
+      default: 24
+      selector:
+        number:
+          min: 0
+          max: 168
+          step: 1
+          unit_of_measurement: hours
+          mode: box
+    simulation_switch:
+      name: Presence Simulation-schakelaar
+      selector:
+        entity:
+          filter:
+            - domain: switch
+
+mode: single
+
+triggers:
+  - trigger: state
+    entity_id: !input away_entity
+    to: "on"
+    for:
+      hours: !input absence_delay
+    id: away
+  - trigger: state
+    entity_id: !input away_entity
+    to: "off"
+    id: home
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: away
+        sequence:
+          - action: presence_simulation.start
+            data:
+              switch_id: !input simulation_switch
+              history_end: "{{ trigger.to_state.last_changed.isoformat() }}"
+      - conditions:
+          - condition: trigger
+            id: home
+        sequence:
+          - action: presence_simulation.stop
+            data:
+              switch_id: !input simulation_switch

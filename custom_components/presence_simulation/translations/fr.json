@@ -15,7 +15,9 @@
                     "restore": "Restaurer l'état des entités à la fin de la simulation",
                     "random": "Ajout d'un délai (s) aléatoire pour les changements d'entités",
                     "unavailable_as_off": "Considérer le statut Indisponible comme éteint",
-					"brightness": "Luminosité à utiliser pour les lampes qui le permettent"
+					"brightness": "Luminosité à utiliser pour les lampes qui le permettent",
+					"history_end_date": "Date de fin de l'historique",
+					"history_end_time": "Heure de fin de l'historique"
                 }
             }
         }
@@ -35,7 +37,9 @@
                     "restore": "Restaurer l'état des entités à la fin de la simulation",
                     "random": "Ajout d'un délai (s) aléatoire pour les changements d'entités",
                     "unavailable_as_off": "Considérer le statut Indisponible comme éteint",
-					"brightness": "Luminosité à utiliser pour les lampes qui le permettent"
+					"brightness": "Luminosité à utiliser pour les lampes qui le permettent",
+					"history_end_date": "Date de fin de l'historique",
+					"history_end_time": "Heure de fin de l'historique"
                 }
             }
         }
