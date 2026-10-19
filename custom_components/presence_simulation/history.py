@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from homeassistant.core import HomeAssistant
 from homeassistant.components.recorder.history import get_significant_states
@@ -36,12 +36,14 @@ class HistoryManager:
         hass: HomeAssistant,
         start_time: datetime,
         entity_ids: List[str],
+        end_time: Optional[datetime] = None,
     ) -> Dict[str, List[Any]]:
         """Fetch significant states for the given entities and time range."""
-        _LOGGER.debug("Getting history from %s for %s", start_time, entity_ids)
+        _LOGGER.debug("Getting history from %s to %s for %s", start_time, end_time, entity_ids)
         history = get_significant_states(
             hass=hass,
             start_time=start_time,
+            end_time=end_time,
             entity_ids=entity_ids,
             include_start_time_state=True,
             significant_changes_only=False,

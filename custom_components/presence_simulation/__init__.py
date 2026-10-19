@@ -52,11 +52,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_register(DOMAIN, "start", services.handle_service_start)
         hass.services.async_register(DOMAIN, "stop", services.handle_service_stop)
         hass.services.async_register(DOMAIN, "toggle", services.handle_service_toggle)
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _launch_simulation_after_restart)
+        hass.services.async_register(DOMAIN, "capture_snapshot", services.handle_service_snapshot)
+        hass.services.async_register(DOMAIN, "create_demo_snapshot", services.handle_service_demo_snapshot)
+
+        async def _on_ha_started(event: Any) -> None:
+            await _launch_simulation_after_restart(hass)
+
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_ha_started)
 
     entry.add_update_listener(update_listener)
 
-    hass.async_create_task(hass.config_entries.async_forward_entry_setups(entry, [SWITCH_PLATFORM]))
+    await hass.config_entries.async_forward_entry_setups(entry, [SWITCH_PLATFORM])
 
     return True
 
@@ -70,7 +76,8 @@ async def _get_or_create_system_user(hass: HomeAssistant) -> Any:
 
     system_user = await hass.auth.async_create_system_user(
         _INTEGRATION_NAME,
-        group_ids=["system-admin"]
+        group_ids=["system-admin"],
+        local_only=True
     )
     _LOGGER.debug("Created system user for presence simulation: %s", system_user.id)
     return system_user
@@ -86,9 +93,10 @@ def is_running(hass: HomeAssistant, switch_id: str) -> bool:
     return entity.is_on
 
 
-async def _launch_simulation_after_restart(event: Any) -> None:
+async def _launch_simulation_after_restart(hass: HomeAssistant) -> None:
     """Launch simulation after HA restart if it was running."""
-    hass = event.hass
+    if SWITCH_PLATFORM not in hass.data.get(DOMAIN, {}):
+        return
     for switch_id in hass.data[DOMAIN][SWITCH_PLATFORM]:
         _LOGGER.debug("Launch simulation after restart : switch is %s", switch_id)
         entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
@@ -121,6 +129,8 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
             hass.services.async_remove(DOMAIN, "start")
             hass.services.async_remove(DOMAIN, "stop")
             hass.services.async_remove(DOMAIN, "toggle")
+            hass.services.async_remove(DOMAIN, "capture_snapshot")
+            hass.services.async_remove(DOMAIN, "create_demo_snapshot")
             _LOGGER.debug("Removed services")
 
             del hass.data[DOMAIN]
@@ -182,5 +192,15 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new_data = {**config_entry.data}
         new_data["labels"] = []
         hass.config_entries.async_update_entry(config_entry, data=new_data, version=5)
+
+    if config_entry.version == 5:
+        _LOGGER.debug("Will migrate to version 6")
+        # The historic end date is no longer part of the configuration:
+        # it can only be provided when calling the start service.
+        new_data = {k: v for k, v in config_entry.data.items() if k != "history_end"}
+        new_options = {k: v for k, v in config_entry.options.items() if k != "history_end"}
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options, version=6
+        )
 
     return True
