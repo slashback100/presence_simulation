@@ -101,7 +101,11 @@ restore_states: True
 random: 300
 unavailable_as_off: True
 brightness: 75
+history_end:  2026-10-20T12:00:00 
 ```
+
+`history_end` defines the end datetime at which the simulation has to restart, before waiting for the end of the 'delta' period.
+
 ### Stop the simulation
 The service `presence_simulation.stop` will stop the simulation and set the `switch.presence_simulation` entity to `off`.
 
