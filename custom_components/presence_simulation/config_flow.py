@@ -81,7 +81,6 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, info=None):
-        errors: Dict[str, str] = {}
         _LOGGER.debug("config flow init %s", info)
         all_entities = self.hass.states.async_entity_ids()
 
@@ -118,7 +117,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         ]
 
         data_schema = {
-            vol.Required("switch", default=switch_val): str,
+            # name is immutable: shown as a single-option dropdown so it can't be edited
+            vol.Required("switch", default=switch_val): SelectSelector(
+                SelectSelectorConfig(options=[switch_val], mode=SelectSelectorMode.DROPDOWN)
+            ),
             vol.Required("entities", default=entities_default): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
             vol.Required("labels", default=labels_val): LabelSelector(LabelSelectorConfig(multiple=True)),
             vol.Required("delta", default=delta_val): DELTA_VALIDATOR,
@@ -135,14 +137,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if not info:
             return self.async_show_form(
                 step_id="init", data_schema=vol.Schema(data_schema)
-            )
-
-        #if pop-up is saved but the name has changed, log an error and ask again
-        if info["switch"] != self.config_entry.data["switch"]:
-            _LOGGER.error("Presence Simulation Switch name can't be changed")
-            errors["base"] = "cannot_change_name"
-            return self.async_show_form(
-                step_id="init", data_schema=vol.Schema(data_schema), errors=errors
             )
 
         info["entities"] = ",".join(info["entities"])
