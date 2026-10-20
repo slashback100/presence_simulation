@@ -111,10 +111,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         delta_val = self.config_entry.options.get("delta", self.config_entry.data["delta"])
 
         entities_default = [
-            elm
+            elm.strip()
             for elm in (entities_val if isinstance(entities_val, list) else entities_val.split(","))
             if elm.strip()
         ]
+        # drop entities that no longer exist: keeping them makes the
+        # selector fail validation with "value must be one of ..."
+        missing = [elm for elm in entities_default if elm not in all_entities]
+        if missing:
+            _LOGGER.warning(
+                "Entities from the configuration no longer exist and will be removed: %s",
+                ", ".join(missing),
+            )
+            entities_default = [elm for elm in entities_default if elm in all_entities]
 
         data_schema = {
             # name is immutable: shown as a single-option dropdown so it can't be edited
