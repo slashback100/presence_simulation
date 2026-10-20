@@ -71,7 +71,7 @@ class PresenceSimulationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         else:
             self.data["entities"] = ",".join(self.data["entities"])
-            return self.async_create_entry(title="Simulation Presence", data=self.data)
+            return self.async_create_entry(title=self.data["switch"], data=self.data)
 
     @staticmethod
     def async_get_options_flow(entry):
