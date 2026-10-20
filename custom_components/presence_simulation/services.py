@@ -45,6 +45,27 @@ class PresenceSimulationServices:
         self._entity_controller = EntityController(
             hass, system_user.id if system_user else None
         )
+        # Per-switch generation counter. Every stop and every new dispatch
+        # increments it; replay tasks capture the value at dispatch time and
+        # abort as soon as it no longer matches. This kills "zombie" tasks that
+        # sleep through a stop->start (cycle restart, snapshot replacement,
+        # toggle within the poll interval) and would otherwise keep replaying
+        # the same entity in parallel with the new run (#125).
+        self._run_ids: Dict[str, int] = {}
+        # Guards start_simulation against concurrent invocations: the
+        # "already running" check happens before several awaits (snapshot load,
+        # entity expansion, history fetch), so without this flag a second
+        # start call in that window dispatches a duplicate set of tasks.
+        self._starting: Dict[str, bool] = {}
+
+    def _next_run_id(self, switch_id: str) -> int:
+        """Invalidate every replay task and restart timer of a switch."""
+        self._run_ids[switch_id] = self._run_ids.get(switch_id, 0) + 1
+        return self._run_ids[switch_id]
+
+    def _is_current_run(self, switch_id: str, run_id: int) -> bool:
+        """Return True when no stop/restart happened since run_id was issued."""
+        return self._run_ids.get(switch_id) == run_id
 
     @staticmethod
     def _get_scene_name(switch_id: str) -> str:
@@ -88,6 +109,7 @@ class PresenceSimulationServices:
             HistoryManager.get_history, self._hass, history_start, entities, history_end
         )
         history = HistoryManager.filter_out_undefined(history, not entity.unavailable_as_off)
+        history = HistoryManager.remove_redundant_states(history)
         snapshot = await SnapshotStore(self._hass, switch_id).save(
             history, history_start, history_end, entities
         )
@@ -192,6 +214,28 @@ class PresenceSimulationServices:
             entity = self._get_switch_entity()[switch_id]
             await entity.reset_default_values_async()
 
+        if self._starting.get(switch_id):
+            _LOGGER.warning(
+                "Presence simulation %s is already starting. Doing nothing", switch_id
+            )
+            return
+        self._starting[switch_id] = True
+        try:
+            await self._start_simulation_locked(
+                call, restart, switch_id, entity, after_ha_restart
+            )
+        finally:
+            self._starting[switch_id] = False
+
+    async def _start_simulation_locked(
+        self,
+        call: Optional[Any],
+        restart: bool,
+        switch_id: str,
+        entity: Any,
+        after_ha_restart: bool,
+    ) -> None:
+        """Body of start_simulation, executed with the starting flag held."""
         _LOGGER.debug("Switch id %s", switch_id)
         _LOGGER.debug("Is already running ? %s", entity.state)
         if self._is_running(switch_id):
@@ -298,6 +342,7 @@ class PresenceSimulationServices:
                 call,
                 replay_offset,
                 history_end,
+                self._next_run_id(switch_id),
             )
         else:
             # Fetching history is blocking, but scheduling entity tasks must
@@ -310,7 +355,14 @@ class PresenceSimulationServices:
                 expanded_entities,
                 history_end,
             )
-            self._dispatch_history(history, switch_id, call, replay_offset, history_end)
+            self._dispatch_history(
+                history,
+                switch_id,
+                call,
+                replay_offset,
+                history_end,
+                self._next_run_id(switch_id),
+            )
 
     def _dispatch_history(
         self,
@@ -319,10 +371,12 @@ class PresenceSimulationServices:
         call: Optional[Any],
         replay_offset: timedelta,
         history_end: Optional[datetime],
+        run_id: int,
     ) -> None:
         """Start replay tasks from recorder history or a persisted snapshot."""
         entity = self._get_switch_entity()[switch_id]
         filtered_history = HistoryManager.filter_out_undefined(history, not entity.unavailable_as_off)
+        filtered_history = HistoryManager.remove_redundant_states(filtered_history)
         _LOGGER.debug("history after filtering: %s", filtered_history)
 
         for entity_id in filtered_history:
@@ -335,11 +389,14 @@ class PresenceSimulationServices:
                     filtered_history[entity_id],
                     replay_offset,
                     entity.random,
+                    run_id,
                 )
             )
 
         self._hass.async_create_task(
-            self._schedule_restart(call, switch_id=switch_id, history_end=history_end)
+            self._schedule_restart(
+                call, switch_id=switch_id, history_end=history_end, run_id=run_id
+            )
         )
         _LOGGER.debug("All async tasks launched")
 
@@ -350,16 +407,22 @@ class PresenceSimulationServices:
         hist: List[Any],
         replay_offset: timedelta,
         random_val: int,
+        run_id: int,
     ) -> None:
         """Replay the historic of one entity."""
         _LOGGER.debug("Simulate one entity: %s", entity_id)
 
         entity = self._get_switch_entity()[switch_id]
         is_running = self._is_running
+        is_current_run = self._is_current_run
         event_fire = self._hass.bus.fire
 
         last_past_state = None
+        prev_target = None
         for idx, state in enumerate(hist):
+            if not is_running(switch_id) or not is_current_run(switch_id, run_id):
+                # The simulation was stopped or replaced by a newer run.
+                return
             _LOGGER.debug("State %s", state.as_dict())
             try:
                 last_updated = state.last_updated_ts
@@ -369,25 +432,27 @@ class PresenceSimulationServices:
             target_time = last_updated + replay_offset
             _LOGGER.debug("Switch of %s foreseen at %s", entity_id, target_time)
 
-            if idx > 0:
+            if idx > 0 and random_val > 0:
                 _LOGGER.debug("Randomize the event within a range of +/- %s sec", random_val)
                 random_delta = random.uniform(-random_val, random_val)
                 _LOGGER.debug("Randomize the event of %s seconds", random_delta)
-                random_delta = random_delta / 60 / 60 / 24
-                target_time += timedelta(random_delta)
-                initial_secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
+                target_time += timedelta(seconds=random_delta)
 
-                if initial_secs_left < MIN_DELAY and random_val > 0:
+            if prev_target is not None:
+                # Keep events ordered and at least MIN_DELAY apart, whatever
+                # the random shifts: without this, random could bring an event
+                # before its predecessor and MIN_DELAY was only measured
+                # against "now", letting several events collapse onto
+                # now+MIN_DELAY and flicker the entity (#125).
+                min_target = prev_target + timedelta(seconds=MIN_DELAY)
+                if target_time < min_target:
                     _LOGGER.debug(
-                        "Random feature is used and wait is below min --> wait min time instead. target_time before %s",
-                        target_time,
+                        "Event of %s would break the min delay with previous event --> shift to %s",
+                        entity_id,
+                        min_target,
                     )
-                    target_time = datetime.now(timezone.utc) + timedelta(seconds=MIN_DELAY)
-                    _LOGGER.debug("target_time after %s", target_time)
-                else:
-                    _LOGGER.debug(
-                        "initial_secs_left %s, target_time %s", initial_secs_left, target_time
-                    )
+                    target_time = min_target
+            prev_target = target_time
 
             if target_time <= datetime.now(timezone.utc):
                 last_past_state = state
@@ -407,13 +472,13 @@ class PresenceSimulationServices:
                 last_past_state = None
             await entity.async_add_next_event(target_time, entity_id, state.state)
 
-            while is_running(switch_id):
+            while is_running(switch_id) and is_current_run(switch_id, run_id):
                 secs_left = (target_time - datetime.now(timezone.utc)).total_seconds()
                 if secs_left <= 0:
                     break
                 await asyncio.sleep(min(secs_left, entity.interval))
 
-            if not is_running(switch_id):
+            if not is_running(switch_id) or not is_current_run(switch_id, run_id):
                 return
 
             event_data = await self._entity_controller.update_entity(
@@ -429,7 +494,9 @@ class PresenceSimulationServices:
                 await entity.set_last_event(event_data)
             await entity.async_remove_event(entity_id)
 
-        if last_past_state is not None and is_running(switch_id):
+        if last_past_state is not None and is_running(switch_id) and is_current_run(
+            switch_id, run_id
+        ):
             event_data = await self._entity_controller.update_entity(
                 entity_id,
                 last_past_state,
@@ -470,6 +537,10 @@ class PresenceSimulationServices:
 
     async def _do_stop(self, switch_id: str, restart: bool = False) -> None:
         """Actually perform the stop operation."""
+        # Invalidate the replay tasks and the restart timer of this run: they
+        # would otherwise only notice the stop at their next poll, and keep
+        # running if the simulation is started again within the interval.
+        self._next_run_id(switch_id)
         entity = self._get_switch_entity()[switch_id]
         entity.internal_turn_off()
 
@@ -521,7 +592,13 @@ class PresenceSimulationServices:
         else:
             await self.start_simulation(call, restart=False)
 
-    async def _schedule_restart(self, call: Any, switch_id: str, history_end: Optional[datetime] = None) -> None:
+    async def _schedule_restart(
+        self,
+        call: Any,
+        switch_id: str,
+        history_end: Optional[datetime] = None,
+        run_id: Optional[int] = None,
+    ) -> None:
         """Make sure that once delta days is passed, relaunch the simulation."""
         entity = self._get_switch_entity()[switch_id]
         use_snapshot = entity.use_snapshot
@@ -538,13 +615,17 @@ class PresenceSimulationServices:
             cycle = max(0, int((datetime.now(timezone.utc) - history_end).total_seconds() // cycle_seconds))
             start_plus_delta = history_end + timedelta(days=entity.delta * (cycle + 1))
 
-        while self._is_running(switch_id):
+        while self._is_running(switch_id) and (
+            run_id is None or self._is_current_run(switch_id, run_id)
+        ):
             secs_left = (start_plus_delta - datetime.now(timezone.utc)).total_seconds()
             if secs_left <= 0:
                 break
             await asyncio.sleep(min(secs_left, entity.interval))
 
-        if self._is_running(switch_id):
+        if self._is_running(switch_id) and (
+            run_id is None or self._is_current_run(switch_id, run_id)
+        ):
             _LOGGER.debug("%s has passed, presence simulation is relaunched", entity.delta)
             await self.stop_simulation(call, restart=True, switch_id=switch_id)
             await self.start_simulation(call, restart=True, switch_id=switch_id)
