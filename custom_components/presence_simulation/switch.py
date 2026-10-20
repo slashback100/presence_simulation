@@ -53,7 +53,8 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         _LOGGER.debug("Config %s", conf["switch"])
         elms = []
         for elm in conf["entities"].split(","):
-            elms += [elm.strip()]
+            if elm.strip():
+                elms += [elm.strip()]
         self._entities = elms
         if "labels" in conf:
             self._labels = conf["labels"]

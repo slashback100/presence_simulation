@@ -111,9 +111,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         labels_val = self.config_entry.options.get("labels", self.config_entry.data.get("labels", []))
         delta_val = self.config_entry.options.get("delta", self.config_entry.data["delta"])
 
+        entities_default = [
+            elm
+            for elm in (entities_val if isinstance(entities_val, list) else entities_val.split(","))
+            if elm.strip()
+        ]
+
         data_schema = {
             vol.Required("switch", default=switch_val): str,
-            vol.Required("entities", default=entities_val.split(",")): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
+            vol.Required("entities", default=entities_default): SelectSelector(SelectSelectorConfig(options=all_entities, multiple=True, mode=SelectSelectorMode.DROPDOWN)),
             vol.Required("labels", default=labels_val): LabelSelector(LabelSelectorConfig(multiple=True)),
             vol.Required("delta", default=delta_val): DELTA_VALIDATOR,
             vol.Required("interval", default=interval): INTERVAL_VALIDATOR,
