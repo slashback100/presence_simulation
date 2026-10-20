@@ -67,6 +67,20 @@ class PresenceSimulationServices:
         """Return True when no stop/restart happened since run_id was issued."""
         return self._run_ids.get(switch_id) == run_id
 
+    def abort_simulation(self, switch_id: str, update_state: bool = True) -> None:
+        """Invalidate every replay task of a switch without restoring the scene.
+
+        Used when the config entry is unloaded or the switch entity is removed:
+        the run must stop immediately, but there is no point fetching/resetting
+        state or restoring the restore-scene at that point (#170).
+        """
+        self._next_run_id(switch_id)
+        if not update_state:
+            return
+        entity = self._get_switch_entity().get(switch_id)
+        if entity is not None:
+            entity.internal_turn_off()
+
     @staticmethod
     def _get_scene_name(switch_id: str) -> str:
         """Generate scene name for restore."""
@@ -531,6 +545,11 @@ class PresenceSimulationServices:
         if self._is_running(switch_id):
             await self._do_stop(switch_id, restart)
         else:
+            # The switch already reports "off" but a previous run may still
+            # have replay tasks alive (they only notice a stop at their next
+            # poll). Invalidate them so the simulation can really be stopped
+            # and does not keep switching entities on its own (#170).
+            self._next_run_id(switch_id)
             _LOGGER.warning(
                 "Presence simulation switch %s is not on, can't be turned off", switch_id
             )

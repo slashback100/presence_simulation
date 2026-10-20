@@ -43,7 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         services = PresenceSimulationServices(
             hass,
-            lambda: hass.data[DOMAIN].get(SWITCH_PLATFORM, {}),
+            lambda: hass.data.get(DOMAIN, {}).get(SWITCH_PLATFORM, {}),
             lambda sid: is_running(hass, sid),
             system_user,
         )
@@ -60,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_ha_started)
 
-    entry.add_update_listener(update_listener)
+    entry.async_on_unload(entry.add_update_listener(update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, [SWITCH_PLATFORM])
 
@@ -83,13 +83,19 @@ async def _get_or_create_system_user(hass: HomeAssistant) -> Any:
     return system_user
 
 
+def _switch_id_for_entry(entry: ConfigEntry) -> str:
+    """Return the switch entity id derived from the configured name."""
+    return SWITCH_PLATFORM + "." + re.sub("[^0-9a-zA-Z]", "_", entry.data["switch"].lower())
+
+
 def is_running(hass: HomeAssistant, switch_id: str) -> bool:
     """Returns true if the simulation is running."""
-    try:
-        entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
-    except Exception as e:
-        _LOGGER.error("Could not load presence simulation switch %s", switch_id)
-        raise e
+    entity = hass.data.get(DOMAIN, {}).get(SWITCH_PLATFORM, {}).get(switch_id)
+    if entity is None:
+        # The switch was removed or its entry unloaded: replay tasks must stop
+        # quietly instead of raising in the background (#170).
+        _LOGGER.debug("Presence simulation switch %s is gone, considering it stopped", switch_id)
+        return False
     return entity.is_on
 
 
@@ -106,37 +112,49 @@ async def _launch_simulation_after_restart(hass: HomeAssistant) -> None:
             await entity.turn_on_async()
 
 
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry, stopping any running simulation first.
+
+    Without this hook Home Assistant cannot unload the integration, so
+    disabling the entry (or reloading it) left the replay tasks and the
+    services running — the simulation kept switching entities on its own
+    until the entry was deleted (#170).
+    """
+    switch_id = _switch_id_for_entry(entry)
+    services = hass.data.get(DOMAIN, {}).get("services")
+    if services is not None:
+        services.abort_simulation(switch_id)
+
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, [SWITCH_PLATFORM])
+    if unload_ok:
+        hass.data.get(DOMAIN, {}).get(SWITCH_PLATFORM, {}).pop(switch_id, None)
+    return unload_ok
+
+
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Handle removal of an entry."""
-    try:
-        await hass.config_entries.async_forward_entry_unload(entry, SWITCH_PLATFORM)
-        _LOGGER.info("Successfully removed switch from the presence simulation integration")
+    """Handle removal of an entry (called after the entry has been unloaded)."""
+    remaining_entries: List[ConfigEntry] = [
+        e for e in hass.config_entries.async_entries(DOMAIN)
+        if e.entry_id != entry.entry_id
+    ]
 
-        remaining_entries: List[ConfigEntry] = [
-            e for e in hass.config_entries.async_entries(DOMAIN)
-            if e.entry_id != entry.entry_id
-        ]
+    if remaining_entries or DOMAIN not in hass.data:
+        return
 
-        if not remaining_entries and DOMAIN in hass.data:
-            system_user = hass.data[DOMAIN].get("system_user")
-            if system_user:
-                try:
-                    await hass.auth.async_remove_user(system_user)
-                    _LOGGER.debug("Removed system user for presence simulation: %s", system_user.id)
-                except Exception as e:
-                    _LOGGER.warning("Failed to remove system user: %s", e)
+    system_user = hass.data[DOMAIN].get("system_user")
+    if system_user:
+        try:
+            await hass.auth.async_remove_user(system_user)
+            _LOGGER.debug("Removed system user for presence simulation: %s", system_user.id)
+        except Exception as e:
+            _LOGGER.warning("Failed to remove system user: %s", e)
 
-            hass.services.async_remove(DOMAIN, "start")
-            hass.services.async_remove(DOMAIN, "stop")
-            hass.services.async_remove(DOMAIN, "toggle")
-            hass.services.async_remove(DOMAIN, "capture_snapshot")
-            hass.services.async_remove(DOMAIN, "create_demo_snapshot")
-            _LOGGER.debug("Removed services")
+    for service in ("start", "stop", "toggle", "capture_snapshot", "create_demo_snapshot"):
+        if hass.services.has_service(DOMAIN, service):
+            hass.services.async_remove(DOMAIN, service)
+    _LOGGER.debug("Removed services")
 
-            del hass.data[DOMAIN]
-
-    except ValueError:
-        pass
+    hass.data.pop(DOMAIN, None)
 
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -144,7 +162,7 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     _LOGGER.debug("Updating listener entry id %s, %s, %s", entry.entry_id, entry.data, entry.options)
 
     if len(entry.options) > 0:
-        switch_id = SWITCH_PLATFORM + "." + re.sub("[^0-9a-zA-Z]", "_", entry.data["switch"].lower())
+        switch_id = _switch_id_for_entry(entry)
         try:
             entity = hass.data[DOMAIN][SWITCH_PLATFORM][switch_id]
         except Exception as e:

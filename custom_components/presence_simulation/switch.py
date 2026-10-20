@@ -279,6 +279,21 @@ class PresenceSimulationSwitch(SwitchEntity,RestoreEntity):
         else:
           self.internal_turn_off()
 
+    async def async_will_remove_from_hass(self):
+        """Invalidate replay tasks when the switch is removed or disabled.
+
+        Removing/disabling the entity must stop the simulation immediately and
+        drop the reference kept in hass.data, otherwise background replay tasks
+        keep switching entities even though no switch is visible any more (#170).
+        """
+        services = self.hass.data.get(DOMAIN, {}).get("services")
+        if services is not None:
+            services.abort_simulation(self.id, update_state=False)
+        switches = self.hass.data.get(DOMAIN, {}).get(SWITCH_PLATFORM, {})
+        if switches.get(self.id) is self:
+            switches.pop(self.id, None)
+        await super().async_will_remove_from_hass()
+
 
     async def async_add_next_event(self, next_datetime, entity_id, state):
         """Add the next event in the the events list and sort them"""
