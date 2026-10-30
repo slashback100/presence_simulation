@@ -11,6 +11,11 @@ start:
       description: The list of entities to use by the presence simulation to override the list configured in the component
       example: >
             - group.outside_lights
+    labels:
+      name: Labels list
+      description: The list of labels whose entities should be used by the presence simulation, in addition to the configured entities
+      example: >
+            - presence_simulation
     delta:
       name: Delta
       description: Override the default number of days used by the simulation
@@ -23,6 +28,10 @@ start:
       name: Activate random
       description: Add a random factor (in seconds) to the historic events
       example: 300
+    unavailable_as_off:
+      name: Consider unavailable as off
+      description: Override the default behavior and consider unavailable entities as off
+      example: True
     brightness:
       name: Set light brightness
       description: Set a specific brightness fot lights that allows it
@@ -31,6 +40,10 @@ start:
       name: End date of the historic
       description: The date and time (ISO format) at the end of the historic to replay, instead of the current date
       example: "2024-01-15T18:00:00"
+    use_snapshot:
+      name: Use snapshot
+      description: Replay the stored snapshot instead of fetching the history from the recorder
+      example: True
 stop:
   description: Stop the presence simulation
   name: Presence simulation stop
@@ -42,6 +55,30 @@ stop:
 toggle:
   description: Toggle the presence simulation
   name: Presence simulation toggle
+  fields:
+    switch_id:
+      name: The id of the presence simulation switch
+      description: The id of the presence simulation switch
+      example: switch.presence_simulation_2
+capture_snapshot:
+  name: Presence simulation capture snapshot
+  description: Capture the recorder history into a local snapshot that the simulation can replay
+  fields:
+    switch_id:
+      name: The id of the presence simulation switch
+      description: The id of the presence simulation switch
+      example: switch.presence_simulation_2
+    delta:
+      name: Delta
+      description: Number of days of history to capture
+      example: 7
+    history_end:
+      name: End date of the historic
+      description: The date and time (ISO format) at the end of the history to capture, instead of the current date
+      example: "2024-01-15T18:00:00"
+create_demo_snapshot:
+  name: Presence simulation create demo snapshot
+  description: Create a temporary seven-day demo snapshot for safe testing
   fields:
     switch_id:
       name: The id of the presence simulation switch

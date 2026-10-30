@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from homeassistant.core import HomeAssistant, Context
 from homeassistant.helpers import label_registry as lr, entity_registry as er
+from homeassistant.helpers.translation import async_get_translations
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, SWITCH_PLATFORM, RESTORE_SCENE, SCENE_PLATFORM, MY_EVENT, MIN_DELAY
@@ -88,6 +89,13 @@ class PresenceSimulationServices:
         import re
         return re.sub(r'_+', '_', tmp)
 
+    async def _notification_message(self, key: str, default: str) -> str:
+        """Return a persistent notification message translated in the HA language."""
+        translations = await async_get_translations(
+            self._hass, self._hass.config.language, "common", [DOMAIN]
+        )
+        return translations.get(f"component.{DOMAIN}.common.{key}", default)
+
     def _get_entity(self, call: Any) -> tuple[str, Any] | tuple[None, None]:
         """Resolve the selected simulation switch."""
         if call and call.data.get("switch_id"):
@@ -133,7 +141,13 @@ class PresenceSimulationServices:
             _LOGGER.warning("Snapshot for %s contains no usable events", switch_id)
             await self._hass.services.async_call(
                 "persistent_notification", "create",
-                {"title": "Presence Simulation", "message": "De opgeslagen historie bevat geen bruikbare gebeurtenissen."},
+                {
+                    "title": "Presence Simulation",
+                    "message": await self._notification_message(
+                        "snapshot_empty",
+                        "The saved history contains no usable events.",
+                    ),
+                },
                 blocking=False,
             )
 
@@ -277,7 +291,13 @@ class PresenceSimulationServices:
                 _LOGGER.error("No usable Presence Simulation snapshot is available")
                 await self._hass.services.async_call(
                     "persistent_notification", "create",
-                    {"title": "Presence Simulation", "message": "Geen bruikbare opgeslagen historie. De simulatie is niet gestart."},
+                    {
+                        "title": "Presence Simulation",
+                        "message": await self._notification_message(
+                            "snapshot_unavailable",
+                            "No usable saved history. The simulation was not started.",
+                        ),
+                    },
                     blocking=False,
                 )
                 return

@@ -1,4 +1,8 @@
 {
+    "common": {
+        "snapshot_empty": "The saved history contains no usable events.",
+        "snapshot_unavailable": "No usable saved history. The simulation was not started."
+    },
     "config": {
 		"error": {
 			"not_unique_name": "The chosen switch name is already taken by another entity, please choose a new name"

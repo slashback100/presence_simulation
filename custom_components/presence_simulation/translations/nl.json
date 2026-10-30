@@ -1,5 +1,9 @@
 {
     "title": "Aanwezigheidssimulatie",
+    "common": {
+        "snapshot_empty": "De opgeslagen historie bevat geen bruikbare gebeurtenissen.",
+        "snapshot_unavailable": "Geen bruikbare opgeslagen historie. De simulatie is niet gestart."
+    },
     "config": {
 		"error": {
 			"not_unique_name": "The chosen switch name is already taken by another entity, please choose a new name"
@@ -14,9 +18,7 @@
                     "interval": "Verversingsinterval (in seconden)",
                     "restore": "Herstel toestand na simulatie",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
-                    "unavailable_as_off": "Consider Unavailable status as Off",
-                    "history_end_date": "Einddatum bronhistorie",
-                    "history_end_time": "Eindtijd bronhistorie"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
@@ -35,9 +37,7 @@
                     "interval": "Verversingsinterval (in seconden)",
                     "restore": "Herstel toestand na simulatie",
                     "random": "Add a random time for switching entities. This parameter define the max time in seconds",
-                    "unavailable_as_off": "Consider Unavailable status as Off",
-                    "history_end_date": "Einddatum bronhistorie",
-                    "history_end_time": "Eindtijd bronhistorie"
+                    "unavailable_as_off": "Consider Unavailable status as Off"
                 }
             }
         }
