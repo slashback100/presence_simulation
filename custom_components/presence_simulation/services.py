@@ -11,7 +11,15 @@ from homeassistant.helpers import label_registry as lr, entity_registry as er
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, SWITCH_PLATFORM, RESTORE_SCENE, SCENE_PLATFORM, MY_EVENT, MIN_DELAY
+from .const import (
+    DOMAIN,
+    SWITCH_PLATFORM,
+    RESTORE_SCENE,
+    SCENE_PLATFORM,
+    MY_EVENT,
+    MIN_DELAY,
+    EXPLICITLY_HANDLED_DOMAINS,
+)
 from .history import HistoryManager
 from .entity_controller import EntityController
 from .snapshot import SnapshotStore
@@ -669,6 +677,28 @@ class PresenceSimulationServices:
             await self.stop_simulation(call, restart=True, switch_id=switch_id)
             await self.start_simulation(call, restart=True, switch_id=switch_id)
 
+    def _is_controllable(self, entity_id: str) -> bool:
+        """Return True when an entity can be turned on and off."""
+        domain = entity_id.split(".", 1)[0]
+        if domain in EXPLICITLY_HANDLED_DOMAINS:
+            return True
+        services = self._hass.services
+        return services.has_service(domain, "turn_on") and services.has_service(domain, "turn_off")
+
+    def _filter_controllable(self, entities: List[str], source: str) -> List[str]:
+        """Keep only entities that can be turned on and off."""
+        controllable: List[str] = []
+        for entity_id in entities:
+            if self._is_controllable(entity_id):
+                controllable.append(entity_id)
+            else:
+                _LOGGER.debug(
+                    "Ignoring %s from %s: domain does not support turn_on and turn_off",
+                    entity_id,
+                    source,
+                )
+        return controllable
+
     async def _expand_entities(self, entities: List[str]) -> List[str]:
         """Expand group entities to their member entities."""
         entities_new: List[str] = []
@@ -683,6 +713,9 @@ class PresenceSimulationServices:
                 if "entity_id" in self._hass.states.get(entity).attributes:
                     group_entities = self._hass.states.get(entity).attributes["entity_id"]
                     group_entities_expanded = await self._expand_entities(group_entities)
+                    group_entities_expanded = self._filter_controllable(
+                        group_entities_expanded, entity
+                    )
                     _LOGGER.debug("State %s", group_entities_expanded)
                     entities_new.extend(group_entities_expanded)
                 else:
@@ -704,9 +737,11 @@ class PresenceSimulationServices:
             await asyncio.sleep(0)
             if label := label_reg.async_get_label(label_str):
                 _LOGGER.debug("expand label_id %s", label.label_id)
-                for entry in er.async_entries_for_label(entity_reg, label.label_id):
-                    _LOGGER.debug("expand entry %s", entry.entity_id)
-                    labels_new.append(entry.entity_id)
+                label_entities = [
+                    entry.entity_id
+                    for entry in er.async_entries_for_label(entity_reg, label.label_id)
+                ]
+                labels_new.extend(self._filter_controllable(label_entities, label_str))
         return labels_new
 
     async def handle_service_start(self, call: Any) -> None:

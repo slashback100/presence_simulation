@@ -6,6 +6,8 @@ SCENE_PLATFORM = "scene"
 UNIQUE_ID = "presence_simulation_1747884960"
 MY_EVENT = "presence_simulation_change"
 
+EXPLICITLY_HANDLED_DOMAINS = ("light", "cover", "media_player", "input_select", "select")
+
 DEFAULT_DELTA = 7
 DEFAULT_INTERVAL = 30
 DEFAULT_RANDOM = 0
